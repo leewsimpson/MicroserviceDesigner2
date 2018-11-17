@@ -1,0 +1,213 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>Microservice Designer v0.3</title>
+    <meta name="description" content="Integration Designer">
+    <meta name="author" content="Lee Simpson">
+
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.4.2/css/all.css" integrity="sha384-/rXc/GQVaYpyDdyxK+ecHPVYJSN9bmVFBvjA/9eOB+pb3F2w2N6fc5qB9Ew5yIns"
+          crossorigin="anonymous">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49"
+            crossorigin="anonymous"></script>
+    <script src="lib/jquery/jquery.js"></script>
+
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+
+    <script src="node_modules\json-schema-ref-parser\dist\ref-parser.js"></script>
+    <script src="lib/gojs/go.js"></script>
+
+
+
+    <script type="text/javascript">
+        function loaded() {
+
+            init();            
+            console.log('loaded');
+        }
+    </script>
+
+    <script src="./scripts/main.js">
+    </script>
+    <script src="./scripts/template.js">
+    </script>
+    <script src="./scripts/util.js">
+    </script>
+    <script src="./scripts/detail.js">
+    </script>
+    <script src="./scripts/mapper/mapper.js">
+    </script>
+
+    <style>
+        .dropdown-menu {
+            margin: 0;
+        }
+
+        .dropdown-submenu {
+            position: relative;
+        }
+
+            .dropdown-submenu a::after {
+                transform: rotate(-90deg);
+                position: absolute;
+                right: 6px;
+                top: .8em;
+            }
+
+        .dropdown:hover > .dropdown-menu {
+            display: block;
+        }
+
+        .navbar-nav li:hover > ul.dropdown-menu {
+            display: block;
+        }
+
+        .dropdown-submenu > .dropdown-menu {
+            top: 0px;
+            left: 100%;
+            margin-top: -6px;
+        }
+    </style>
+</head>
+
+<body onload="loaded()" class="bg-dark">
+
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mainmenu">
+        <ul class="navbar-nav">
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown"
+                   aria-haspopup="true" aria-expanded="false">
+                    File
+                </a>
+                <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                    <a class="dropdown-item" href="#" onclick="save()">Save</a>
+                    <a class="dropdown-item" href="#" onclick="load()">Revert to Last Saved</a>
+                    <a class="dropdown-item" href="#" onclick="save()">Version History</a>
+                </div>
+            </li>
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown"
+                   aria-haspopup="true" aria-expanded="false">
+                    Export
+                </a>
+                <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                    <a class="dropdown-item" href="#" onclick="download()" ">XLS</a>
+                    <a class="
+                        dropdown-item" href="#" onclick="generateImageLink(this)" download="x.png">Image</a>
+                </div>
+            </li>
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown"
+                   aria-haspopup="true" aria-expanded="false">Generate</a>
+                <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                    <a class="dropdown-item" href="#">Wiki Documentation</a>
+                    <a class="dropdown-item" href="#">Integration Code</a>
+                    <a class="dropdown-item" href="#">Backlog Workitems</a>
+                    <a class="dropdown-item" href="#">Estimate</a>
+                </div>
+            </li>
+        </ul>
+
+        <div class="collapse navbar-collapse justify-content-center">
+            <div id="Project" class="nav-link disabled">loading...</div>
+            <div id="unsavedChanges" style="color:white">(Unsaved Changes)</div>
+        </div>
+        <div class="collapse navbar-collapse justify-content-right">
+            <ul class="navbar-nav">
+                <li>
+                    <a class="nav-link" href="#" onclick="Util.showHideAll(false)">Hide All</a>
+                </li>
+                <li>
+                    <a class="nav-link" href="#" onclick="Util.showHideAll(true)">Include All</a>
+                </li>
+
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown"
+                       aria-haspopup="true" aria-expanded="false">Include API</a>
+                    <ul id="APIList" class="dropdown-menu" aria-labelledby="navbarDropdown"></ul>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown"
+                       aria-haspopup="true" aria-expanded="false">Include System</a>
+                    <ul id="SystemList" class="dropdown-menu" aria-labelledby="navbarDropdown"></ul>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown"
+                       aria-haspopup="true" aria-expanded="false">Include Event</a>
+                    <ul id="EventList" class="dropdown-menu" aria-labelledby="navbarDropdown"></ul>
+                </li>
+            </ul>
+        </div>
+    </nav>
+    <div class="" style="background-color:white;position: absolute;top:60px;bottom:0;right:0;left:0;overflow:hidden;">
+        <div id="myDiagramDiv" style="background-color:white;position: absolute;top:0px;bottom:0;right:0;left:0"></div>
+    </div>
+    <div class="modal fade" tabindex="-1" role="dialog" aria-labelledby="mySmallModalLabel" aria-hidden="true" id="confirmModal">
+        <div class="modal-dialog modal-sm">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="myModalLabel">Are you sure you want to delete this item?</h4>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" id="modal-btn-si">OK</button>
+                    <button type="button" class="btn btn-primary" id="modal-btn-no">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" id="detailModal">
+        <div class="card-body px-lg-5 pt-0" role="document">
+            <div class="modal-form">
+                <div class="modal-header">
+                    <h4 class="modal-title w-100 font-weight-bold">Details</h4>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body mx-3">
+                    <div class="md-form mb-5">
+                        <label data-error="wrong" data-success="right" for="detail-name">Name</label>
+                        <input type="text" id="detail-name" class="form-control validate">
+                    </div>
+                    <div class="md-form mx-3" id="detail-internal-div">
+                        <label>Internal</label>
+                        <input type="checkbox" id="detail-internal">
+                    </div>
+                    <div class="md-form mb-5">
+                        <label data-error="wrong" data-success="right" for="detail-url">Link URL</label>
+                        <input type="url" id="detail-url" class="form-control validate">
+                    </div>
+
+                    <div class="md-form mb-4">
+                        <label data-error="wrong" data-success="right" for="detail-description">Description</label>
+                        <textarea rows="4" id="detail-description" class="form-control validate"></textarea>
+                    </div>
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" id="detail-btn-ok">OK</button>
+                    <button type="button" class="btn btn-primary" id="detail-btn-cancel">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="dataDebugger" style="position: absolute; bottom:10"></div>
+
+    <div id="mapper" style="position: absolute; top:90px;left:40px; right:40px; background-color:rgba(236, 235, 235, 0.904);bottom:40px;z-index: 100">
+        <div class="modal-headerx" style="position: absolute; top:0px;">
+            <h4 style="stroke: darkgray">Mapping</h4>
+        </div>
+        <div class="modal-contentx" id="mapperDiv" style="width:100%;height:100%;background-color:rgba(255, 255, 255, 0); border:white"></div>
+        <div class="modal-footerx" style="position: absolute; bottom:10px;right:10px; z-index: 1000">
+            <button type="button" class="btn btn-default" id="mapper-btn-ok">OK</button>
+            <button type="button" class="btn btn-primary" id="mapper-btn-cancel2">Cancel</button>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,22 @@
+{
+  "version": "1.0",
+  "defaultProvider": "cdnjs",
+  "libraries": [
+    {
+      "library": "bootstrap-rtl@3.4.0",
+      "destination": "lib/bootstrap-rtl/"
+    },
+    {
+      "library": "gojs@1.8.33",
+      "destination": "lib/gojs/"
+    },
+    {
+      "library": "bootstrap-modal@2.2.6",
+      "destination": "lib/bootstrap-modal/"
+    },
+    {
+      "library": "bootstrap-submenu@3.0.1",
+      "destination": "lib/bootstrap-submenu/"
+    }
+  ]
+}
