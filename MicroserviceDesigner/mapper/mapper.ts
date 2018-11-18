@@ -1,25 +1,32 @@
 
-namespace mapper {
+
+namespace mapper
+{
     declare var $RefParser: any;
 
     var mapperDiagram: go.Diagram;
-    var callback;
+    var callback: () => void;
 
-    function setupModal() {
-        $('#mapper-btn-ok').on('click', function () {
+    function setupModal()
+    {
+        $('#mapper-btn-ok').on('click', function ()
+        {
             callback();
             $('#mapper').hide();
         });
 
-        $('#mapper-btn-cancel1').on('click', function () {
+        $('#mapper-btn-cancel1').on('click', function ()
+        {
             $('#mapper').hide();
         });
-        $('#mapper-btn-cancel2').on('click', function () {
+        $('#mapper-btn-cancel2').on('click', function ()
+        {
             $('#mapper').hide();
         });
     }
 
-    export function initMapper() {
+    export function initMapper()
+    {
         setupModal();
         $('#mapper').hide();
 
@@ -37,11 +44,12 @@ namespace mapper {
         });
 
         // All links must go from a node inside the "Left Side" Group to a node inside the "Right Side" Group.
-        function checkLink(fn, fp, tn, tp, link) {
+        function checkLink(fromNode: go.Node, toNode: go.Node)
+        {
             // make sure the nodes are inside different Groups
-            if (fn.containingGroup === null || fn.containingGroup.data.key !== -1)
+            if (fromNode.containingGroup === null || fromNode.containingGroup.data.key !== -1)
                 return false;
-            if (tn.containingGroup === null || tn.containingGroup.data.key !== -2)
+            if (toNode.containingGroup === null || toNode.containingGroup.data.key !== -2)
                 return false;
             return true;
         }
@@ -51,10 +59,12 @@ namespace mapper {
             go.Node, //TreeNode
             { movable: false }, // user cannot move an individual node
             { selectionAdorned: false },
-            new go.Binding('fromLinkable', 'group', function (k) {
+            new go.Binding('fromLinkable', 'group', function (k)
+            {
                 return k === -1;
             }),
-            new go.Binding('toLinkable', 'group', function (k) {
+            new go.Binding('toLinkable', 'group', function (k)
+            {
                 return k === -2;
             }),
             gojs('TreeExpanderButton', {
@@ -73,7 +83,8 @@ namespace mapper {
                 go.Panel,
                 'Horizontal',
                 { position: new go.Point(16, 0) },
-                new go.Binding('background', 'isSelected', function (s) {
+                new go.Binding('background', 'isSelected', function (s)
+                {
                     return s ? 'lightblue' : 'white';
                 }).ofObject(),
                 gojs(
@@ -151,7 +162,8 @@ namespace mapper {
         );
     }
 
-     export function loadMapper(from: string, to: string, cb) {
+    export function loadMapper(from: string, to: string, cb)
+    {
         callback = cb;
         var nodeDataArray = [
             { isGroup: true, key: -1, text: 'From : ' + from, xy: '0 0', group: 0 },
@@ -166,16 +178,18 @@ namespace mapper {
         ];
 
         // initialize tree on left side
-        var root = { isGroup: false, key: 0, text: 'x', xy: '', group: -1, name:"root" };
+        var root = { isGroup: false, key: 0, text: 'x', xy: '', group: -1, name: "root" };
         nodeDataArray.push(root);
         $RefParser.dereference('only.json')
-             .then(function (schema) {
-                 recurse(schema, nodeDataArray, linkDataArray, root);
-                 mapperDiagram.model = new go.GraphLinksModel(nodeDataArray, linkDataArray);
-             })
-             .catch(function (err) {
-                 console.error(err);
-             });
+            .then(function (schema)
+            {
+                recurse(schema, nodeDataArray, linkDataArray, root);
+                mapperDiagram.model = new go.GraphLinksModel(nodeDataArray, linkDataArray);
+            })
+            .catch(function (err)
+            {
+                console.error(err);
+            });
 
         //for (var i = 0; i < 11;) {
         //    i = makeTree(
@@ -191,9 +205,10 @@ namespace mapper {
         //}
 
         // initialize tree on right side
-         var root2 = { isGroup: false, key: 1000, text: '', xy: '', group: -2, name: "root" };
+        var root2 = { isGroup: false, key: 1000, text: '', xy: '', group: -2, name: "root" };
         nodeDataArray.push(root2);
-        for (var i = 0; i < 15;) {
+        for (var i = 0; i < 15;)
+        {
             i = makeTree(
                 3,
                 i,
@@ -205,7 +220,7 @@ namespace mapper {
                 root2.key
             );
         }
-        
+
     }
 
     // help create a random tree structure
@@ -218,15 +233,18 @@ namespace mapper {
         parentdata,
         groupkey,
         rootkey
-    ) {
+    )
+    {
         var numchildren = Math.floor(Math.random() * 10);
-        for (var i = 0; i < numchildren; i++) {
+        for (var i = 0; i < numchildren; i++)
+        {
             if (count >= max) return count;
             count++;
             var childdata = { key: rootkey + count, group: groupkey };
             nodeDataArray.push(childdata);
             linkDataArray.push({ from: parentdata.key, to: childdata.key });
-            if (level > 0 && Math.random() > 0.5) {
+            if (level > 0 && Math.random() > 0.5)
+            {
                 count = makeTree(
                     level - 1,
                     count,
@@ -242,20 +260,23 @@ namespace mapper {
         return count;
     }
 
-    var id:number = 0;
+    var id: number = 0;
 
-    function recurse(schema, nodeDataArray, linkDataArray, parentdata) {
-        for (var item in schema.properties) {
+    function recurse(schema: any, nodeDataArray, linkDataArray, parentdata)
+    {
+        for (var item in schema.properties)
+        {
             id++;
-            var childdata = { key: id, name:item, group:-1 }; 
+            var childdata = { key: id, name: item, group: -1 };
             nodeDataArray.push(childdata);
             linkDataArray.push({ from: parentdata.key, to: childdata.key });
 
             console.log(id + ' - ' + item + ' (' + schema.properties[item].type + ') P' + parentdata.key);
             //console.log(parentdata.key);
             //console.log(childdata.key);
-                
-            if (schema.properties[item].properties) {
+
+            if (schema.properties[item].properties)
+            {
                 console.log(':');
                 recurse(schema.properties[item], nodeDataArray, linkDataArray, childdata);
             }
