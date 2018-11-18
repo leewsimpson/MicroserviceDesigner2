@@ -54,9 +54,9 @@ namespace Details
             $('#detail-internal-div').hide()
 
         if (input.type == 'Operation' || input.type == 'InternalOperation' || input.type == 'System' || input.type == 'Event')
-            $('#detail-schema-div').show()
+            document.getElementById('detail-schema-tab').hidden = false;
         else
-            $('#detail-schema-div').hide()
+            document.getElementById('detail-schema-tab').hidden = true;
 
 
         $('#detail-name').val(input.name.toString());

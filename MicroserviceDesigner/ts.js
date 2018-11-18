@@ -36,9 +36,9 @@ var Details;
         else
             $('#detail-internal-div').hide();
         if (input.type == 'Operation' || input.type == 'InternalOperation' || input.type == 'System' || input.type == 'Event')
-            $('#detail-schema-div').show();
+            document.getElementById('detail-schema-tab').hidden = false;
         else
-            $('#detail-schema-div').hide();
+            document.getElementById('detail-schema-tab').hidden = true;
         $('#detail-name').val(input.name.toString());
         if (input.description)
             $('#detail-description').val(input.description.toString());
@@ -421,11 +421,12 @@ var mapper;
         }, new go.Binding('text')), gojs(go.Placeholder, { padding: 5 })));
     }
     mapper.initMapper = initMapper;
-    function loadMapper(from, to, cb) {
-        callback = cb;
+    function loadMapper(from, to, callback) {
+        console.log(from);
+        callback = callback;
         var nodeDataArray = [
-            { isGroup: true, key: -1, text: 'From : ' + from, xy: '0 0', group: 0 },
-            { isGroup: true, key: -2, text: 'To : ' + to, xy: '300 0', group: 0 }
+            { isGroup: true, key: -1, text: 'From : ' + from.name, xy: '0 0', group: 0 },
+            { isGroup: true, key: -2, text: 'To : ' + to.name, xy: '300 0', group: 0 }
         ];
         var linkDataArray = [
             { from: 6, to: 1012, category: 'Mapping' },
@@ -436,7 +437,8 @@ var mapper;
         ];
         var root = { isGroup: false, key: 0, text: 'x', xy: '', group: -1, name: "root" };
         nodeDataArray.push(root);
-        $RefParser.dereference('only.json')
+        var json = JSON.parse(from.schema);
+        $RefParser.dereference(json)
             .then(function (schema) {
             recurse(schema, nodeDataArray, linkDataArray, root);
             mapperDiagram.model = new go.GraphLinksModel(nodeDataArray, linkDataArray);
@@ -588,8 +590,8 @@ var Template;
             toolTip: Template.toolTip(),
             contextMenu: gojs(go.Adornment, "Vertical", gojs("ContextMenuButton", gojs(go.TextBlock, "Mapping"), {
                 click: function (e, obj) {
-                    var from = e.diagram.model.findNodeDataForKey(obj.part.data.from).name;
-                    var to = e.diagram.model.findNodeDataForKey(obj.part.data.to).name;
+                    var from = e.diagram.model.findNodeDataForKey(obj.part.data.from);
+                    var to = e.diagram.model.findNodeDataForKey(obj.part.data.to);
                     $('#mapper').show();
                     mapper.loadMapper(from, to, function () { console.log('mapped'); });
                 }

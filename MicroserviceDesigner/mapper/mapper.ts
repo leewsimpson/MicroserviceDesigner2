@@ -1,5 +1,3 @@
-
-
 namespace mapper
 {
     declare var $RefParser: any;
@@ -162,12 +160,13 @@ namespace mapper
         );
     }
 
-    export function loadMapper(from: string, to: string, cb)
+    export function loadMapper(from: data.nodeData, to: data.nodeData, callback)
     {
-        callback = cb;
+        console.log(from);
+        callback = callback;
         var nodeDataArray = [
-            { isGroup: true, key: -1, text: 'From : ' + from, xy: '0 0', group: 0 },
-            { isGroup: true, key: -2, text: 'To : ' + to, xy: '300 0', group: 0 }
+            { isGroup: true, key: -1, text: 'From : ' + from.name, xy: '0 0', group: 0 },
+            { isGroup: true, key: -2, text: 'To : ' + to.name, xy: '300 0', group: 0 }
         ];
         var linkDataArray = [
             { from: 6, to: 1012, category: 'Mapping' },
@@ -180,7 +179,8 @@ namespace mapper
         // initialize tree on left side
         var root = { isGroup: false, key: 0, text: 'x', xy: '', group: -1, name: "root" };
         nodeDataArray.push(root);
-        $RefParser.dereference('only.json')
+        var json = JSON.parse(from.schema) as JSON
+        $RefParser.dereference(json)
             .then(function (schema)
             {
                 recurse(schema, nodeDataArray, linkDataArray, root);

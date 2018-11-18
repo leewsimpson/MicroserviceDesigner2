@@ -16,8 +16,8 @@ namespace Template
                     gojs("ContextMenuButton", gojs(go.TextBlock, "Mapping"), {
                         click: function (e: go.InputEvent, obj: go.Part)
                         {
-                            var from = e.diagram.model.findNodeDataForKey(obj.part.data.from).name;
-                            var to = e.diagram.model.findNodeDataForKey(obj.part.data.to).name;
+                            var from = e.diagram.model.findNodeDataForKey(obj.part.data.from);
+                            var to = e.diagram.model.findNodeDataForKey(obj.part.data.to);
                             $('#mapper').show();
                             mapper.loadMapper(from, to, function () { console.log('mapped'); });
                         }
