@@ -201,7 +201,7 @@ function getCategory(dataString: string, category: string)
     return data;
 };
 
-function includeNode(key: string)
+function includeNode(key: number)
 {
     if (myDiagram)
     {
@@ -219,7 +219,7 @@ function includeNode(key: string)
     }
 }
 
-function includeAPI(key: string)
+function includeAPI(key: number)
 {
     myDiagram.startTransaction();
     myDiagram.nodes.each(function (node: go.Node) 
@@ -233,7 +233,7 @@ function includeAPI(key: string)
     myDiagram.commitTransaction();
 }
 
-function getInnerNodes(dataString: string, key: string)
+function getInnerNodes(dataString: string, key: number)
 {
     var data = JSON.parse(dataString).nodeDataArray.filter(function (node: data.nodeData)
     {

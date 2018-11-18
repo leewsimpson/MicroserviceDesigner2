@@ -1,10 +1,13 @@
 var Details;
 (function (Details) {
+    var schemaDiagram;
     class Detail {
     }
     Details.Detail = Detail;
     var callback;
     function init() {
+        initSchemaDiagram();
+        schemaDiagram.model = new go.GraphLinksModel();
         $('#detail-btn-ok').on('click', function () {
             var type = $('#detail-type').val();
             var internalChecked = document.getElementById('detail-internal').checked;
@@ -15,7 +18,6 @@ var Details;
                 description: $('#detail-description').val(),
                 schema: $('#detail-schema').val()
             };
-            console.log(internalChecked);
             if (type == "Operation" && internalChecked) {
                 d.type = "InternalOperation";
             }
@@ -23,42 +25,127 @@ var Details;
                 d.type = "Operation";
             }
             $('#detailModal').modal('hide');
-            callback(d);
+            callback(d, schemaDiagram.model.nodeDataArray, schemaDiagram.model.linkDataArray);
         });
         $('#detail-btn-cancel').on('click', function () {
             $('#detailModal').modal('hide');
         });
     }
     Details.init = init;
-    function showDetails(input, cb) {
-        if (input.type == 'Operation' || input.type == 'InternalOperation')
+    function showDetails(baseDiagram, thisNode, cb) {
+        if (thisNode.category == 'Operation' || thisNode.category == 'InternalOperation')
             $('#detail-internal-div').show();
         else
             $('#detail-internal-div').hide();
-        if (input.type == 'Operation' || input.type == 'InternalOperation' || input.type == 'System' || input.type == 'Event')
+        $('#home-tab').click();
+        if (thisNode.category == 'Operation' || thisNode.category == 'InternalOperation' || thisNode.category == 'System' || thisNode.category == 'Event')
             document.getElementById('detail-schema-tab').hidden = false;
         else
             document.getElementById('detail-schema-tab').hidden = true;
-        $('#detail-name').val(input.name.toString());
-        if (input.description)
-            $('#detail-description').val(input.description.toString());
+        $('#detail-name').val(thisNode.name.toString());
+        if (thisNode.description)
+            $('#detail-description').val(thisNode.description.toString());
         else
             $('#detail-description').val("");
-        if (input.schema)
-            $('#detail-schema').val(input.schema.toString());
+        if (thisNode.schema)
+            $('#detail-schema').val(thisNode.schema.toString());
         else
             $('#detail-schema').val("");
         var isInternal = document.getElementById('detail-internal');
-        isInternal.checked = (input.type == "InternalOperation");
-        $('#detail-type').val(input.type.toString());
-        if (input.detailLink)
-            $('#detail-url').val(input.detailLink.toString());
+        isInternal.checked = (thisNode.category == "InternalOperation");
+        $('#detail-type').val(thisNode.category.toString());
+        if (thisNode.detailLink)
+            $('#detail-url').val(thisNode.detailLink.toString());
         else
             $('#detail-url').val("");
+        schemaDiagram.model = baseDiagram.model;
+        onlyShowAttributes();
+        $('#detail-fromSchema').click(function () {
+            Details.loadFromSchema(thisNode, function (newNodes, newLinks) {
+                updateModelFromSchema(baseDiagram, thisNode, newNodes, newLinks);
+            });
+        });
         callback = cb;
         $('#detailModal').modal();
     }
     Details.showDetails = showDetails;
+    function onlyShowAttributes() {
+        schemaDiagram.startTransaction();
+        schemaDiagram.nodes.each(function (node) {
+            node.visible = (node.category == "Attribute");
+        });
+        schemaDiagram.commitTransaction();
+    }
+    function updateModelFromSchema(baseDiagram, rootNode, updatedSchemaNodes, updatedSchemaLinks) {
+        schemaDiagram.startTransaction();
+        schemaDiagram.nodes.each(function (node) {
+            var nodeData = node.data;
+            if (nodeData.category == "Attribute") {
+                schemaDiagram.model.removeNodeData(nodeData);
+            }
+        });
+        schemaDiagram.model.addNodeDataCollection(updatedSchemaNodes);
+        schemaDiagram.model.addLinkDataCollection(updatedSchemaLinks);
+        baseDiagram.nodes.each(function (node) { if (node.category == "Attribute")
+            node.visible = false; });
+        schemaDiagram.commitTransaction();
+        console.log(schemaDiagram.model);
+    }
+    function initSchemaDiagram() {
+        var gojs = go.GraphObject.make;
+        schemaDiagram = gojs(go.Diagram, 'schemaDiagramDiv', {
+            layout: gojs(go.TreeLayout, { nodeSpacing: 3 }),
+            initialContentAlignment: go.Spot.Center,
+        });
+        schemaDiagram.nodeTemplate = gojs(go.Node, { movable: false }, { selectionAdorned: false }, gojs('TreeExpanderButton', {
+            width: 14,
+            height: 14,
+            'ButtonIcon.stroke': 'white',
+            'ButtonIcon.strokeWidth': 2,
+            'ButtonBorder.fill': 'DodgerBlue',
+            'ButtonBorder.stroke': null,
+            'ButtonBorder.figure': 'Rectangle',
+            _buttonFillOver: 'RoyalBlue',
+            _buttonStrokeOver: null,
+            _buttonFillPressed: null
+        }), gojs(go.Panel, 'Horizontal', { position: new go.Point(16, 0) }, new go.Binding('background', 'isSelected', function (s) {
+            return s ? 'lightblue' : 'white';
+        }).ofObject(), gojs(go.TextBlock, new go.Binding('text', 'name'))));
+        schemaDiagram.linkTemplate = gojs(go.Link, {
+            selectable: false,
+            routing: go.Link.Orthogonal,
+            fromEndSegmentLength: 4,
+            toEndSegmentLength: 4,
+            fromSpot: new go.Spot(0.001, 1, 7, 0),
+            toSpot: go.Spot.Left
+        }, gojs(go.Shape, { stroke: 'lightgray' }));
+    }
+    var id = 1000;
+    function loadFromSchema(root, done) {
+        var json = JSON.parse($('#detail-schema').val());
+        $RefParser.dereference(json)
+            .then(function (schema) {
+            var nodeDataArray = new Array();
+            var linkDataArray = new Array();
+            recurse(schema, nodeDataArray, linkDataArray, root);
+            done(nodeDataArray, linkDataArray);
+        })
+            .catch(function (err) {
+            console.error(err);
+        });
+    }
+    Details.loadFromSchema = loadFromSchema;
+    function recurse(schema, nodeDataArray, linkDataArray, parentdata) {
+        for (var item in schema.properties) {
+            id++;
+            var childdata = { key: id, name: item, category: "Attribute" };
+            nodeDataArray.push(childdata);
+            linkDataArray.push({ from: parentdata.key, to: childdata.key });
+            if (schema.properties[item].properties) {
+                recurse(schema.properties[item], nodeDataArray, linkDataArray, childdata);
+            }
+        }
+    }
 })(Details || (Details = {}));
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -438,14 +525,6 @@ var mapper;
         var root = { isGroup: false, key: 0, text: 'x', xy: '', group: -1, name: "root" };
         nodeDataArray.push(root);
         var json = JSON.parse(from.schema);
-        $RefParser.dereference(json)
-            .then(function (schema) {
-            recurse(schema, nodeDataArray, linkDataArray, root);
-            mapperDiagram.model = new go.GraphLinksModel(nodeDataArray, linkDataArray);
-        })
-            .catch(function (err) {
-            console.error(err);
-        });
         var root2 = { isGroup: false, key: 1000, text: '', xy: '', group: -2, name: "root" };
         nodeDataArray.push(root2);
         for (var i = 0; i < 15;) {
@@ -469,19 +548,6 @@ var mapper;
         return count;
     }
     var id = 0;
-    function recurse(schema, nodeDataArray, linkDataArray, parentdata) {
-        for (var item in schema.properties) {
-            id++;
-            var childdata = { key: id, name: item, group: -1 };
-            nodeDataArray.push(childdata);
-            linkDataArray.push({ from: parentdata.key, to: childdata.key });
-            console.log(id + ' - ' + item + ' (' + schema.properties[item].type + ') P' + parentdata.key);
-            if (schema.properties[item].properties) {
-                console.log(':');
-                recurse(schema.properties[item], nodeDataArray, linkDataArray, childdata);
-            }
-        }
-    }
 })(mapper || (mapper = {}));
 var data;
 (function (data) {
@@ -778,14 +844,7 @@ var Template;
             click: function (e, obj) {
                 var node = obj.part.data;
                 var diagram = e.diagram;
-                let input = {
-                    type: node.category,
-                    name: node.name,
-                    description: node.description,
-                    schema: node.schema,
-                    detailLink: node.detailLink
-                };
-                Details.showDetails(input, function (detail) {
+                Details.showDetails(diagram, node, function (detail) {
                     diagram.startTransaction();
                     diagram.model.setDataProperty(node, "name", detail.name);
                     diagram.model.setDataProperty(node, "detailLink", detail.detailLink);
@@ -866,7 +925,7 @@ var Util;
     Util.getcurrentLayout = getcurrentLayout;
     function showHideAll(myDiagram, visible, linksVisible) {
         myDiagram.startTransaction();
-        myDiagram.nodes.each(function (node) { node.visible = visible; });
+        myDiagram.nodes.each(function (node) { node.visible = visible && node.category != "Attribute"; });
         myDiagram.links.each(function (node) { node.visible = linksVisible; });
         myDiagram.layout = Util.getcurrentLayout();
         myDiagram.commitTransaction();
@@ -968,7 +1027,7 @@ var Util;
             dataType: "json",
             processData: false,
             success: function (result) {
-                console.log("success");
+                console.log("saved");
             },
             error: function (jqXhr, textStatus, errorThrown) {
                 console.log(errorThrown);

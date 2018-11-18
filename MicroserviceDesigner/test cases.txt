@@ -1,0 +1,22 @@
+﻿can create each item from context
+can link between each item
+can move operations between apis
+can move things into domain
+***can move things out of domain
+can save then load back
+can edit details and load back
+	editing one node does not change any others
+	name changes name
+	description appears in tooltips (all node types)
+*** tooltips only appear when description is present
+*** tooltips include type of node
+can load schema from json
+closing and opening dialog retains schema diagram
+schema diagrams do not effect each other (clashing IDs)
+saving and loading retains schema diagrams
+can view mapping
+***mapping shows info if schema not defined
+mapping persists between closing and loading of dialogs
+mapping saves and loads
+
+*** Trace an attribute?

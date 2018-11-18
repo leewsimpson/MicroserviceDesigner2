@@ -123,7 +123,7 @@
             </ul>
         </div>
     </nav>
-    <div class="" style="background-color:white;position: absolute;top:60px;bottom:30px;right:0;left:0;overflow:hidden;">
+    <div class="" style="background-color:white;position: absolute;top:60px;bottom:0px;right:0;left:0;overflow:hidden;">
         <div id="myDiagramDiv" style="background-color:white;position: absolute;top:0px;bottom:0;right:0;left:0"></div>
     </div>
     <div class="modal fade" tabindex="-1" role="dialog" aria-labelledby="mySmallModalLabel" aria-hidden="true" id="confirmModal">
@@ -181,7 +181,9 @@
                             <div class="tab-pane fade" id="profile" role="tabpanel" aria-labelledby="profile-tab">
                                 <div class="md-form mb-4" id="detail-schema-div">
                                     <label data-error="wrong" data-success="right" for="detail-schema">Schema</label>
-                                    <textarea rows="14" id="detail-schema" class="form-control validate"></textarea>
+                                    <div id="schemaDiagramDiv" style="background-color:white;width:600px; height:400px"></div>                                    
+                                    <textarea rows="5" id="detail-schema" class="form-control validate"></textarea>
+                                    <button id="detail-fromSchema" class="btn btn-primary" >Load from Schema</button>
                                 </div>
                             </div>
                         </div>

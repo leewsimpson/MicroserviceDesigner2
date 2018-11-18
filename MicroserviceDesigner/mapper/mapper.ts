@@ -1,6 +1,5 @@
 namespace mapper
 {
-    declare var $RefParser: any;
 
     var mapperDiagram: go.Diagram;
     var callback: () => void;
@@ -180,16 +179,6 @@ namespace mapper
         var root = { isGroup: false, key: 0, text: 'x', xy: '', group: -1, name: "root" };
         nodeDataArray.push(root);
         var json = JSON.parse(from.schema) as JSON
-        $RefParser.dereference(json)
-            .then(function (schema)
-            {
-                recurse(schema, nodeDataArray, linkDataArray, root);
-                mapperDiagram.model = new go.GraphLinksModel(nodeDataArray, linkDataArray);
-            })
-            .catch(function (err)
-            {
-                console.error(err);
-            });
 
         //for (var i = 0; i < 11;) {
         //    i = makeTree(
@@ -262,24 +251,5 @@ namespace mapper
 
     var id: number = 0;
 
-    function recurse(schema: any, nodeDataArray, linkDataArray, parentdata)
-    {
-        for (var item in schema.properties)
-        {
-            id++;
-            var childdata = { key: id, name: item, group: -1 };
-            nodeDataArray.push(childdata);
-            linkDataArray.push({ from: parentdata.key, to: childdata.key });
-
-            console.log(id + ' - ' + item + ' (' + schema.properties[item].type + ') P' + parentdata.key);
-            //console.log(parentdata.key);
-            //console.log(childdata.key);
-
-            if (schema.properties[item].properties)
-            {
-                console.log(':');
-                recurse(schema.properties[item], nodeDataArray, linkDataArray, childdata);
-            }
-        }
-    }
+   
 }

@@ -14,13 +14,13 @@ namespace Util
     export function showHideAll(myDiagram:go.Diagram, visible:boolean, linksVisible:boolean)
     {
         myDiagram.startTransaction();
-        myDiagram.nodes.each(function(node: go.Node) {node.visible = visible;});
+        myDiagram.nodes.each(function(node: go.Node) {node.visible = visible && node.category!="Attribute";});
         myDiagram.links.each(function(node: go.Link) {node.visible = linksVisible;});
         myDiagram.layout = Util.getcurrentLayout();
         myDiagram.commitTransaction();
     }
 
-    export function focusOnAPI(diagram: go.Diagram, key:string)
+    export function focusOnAPI(diagram: go.Diagram, key: number)
     {
         showHideAll(diagram, false, true);
         diagram.startTransaction();
@@ -55,7 +55,7 @@ namespace Util
         diagram.commitTransaction();    
     }
 
-    export function focus(diagram: go.Diagram, key: string)
+    export function focus(diagram: go.Diagram, key: number)
     {
         showHideAll(diagram, false, false);
         diagram.startTransaction();
@@ -148,7 +148,7 @@ namespace Util
                 processData: false,
                 success: function(result)
                 {
-                    console.log("success");
+                    console.log("saved");
                 },
                 error: function( jqXhr, textStatus, errorThrown ){
                     console.log( errorThrown );

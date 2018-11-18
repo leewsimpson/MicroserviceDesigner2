@@ -5,8 +5,8 @@
         name: string;
         category?: string;
         isGroup?: boolean;
-        key?: string;
-        group?: string;
+        key?: number;
+        group?: number;
         schema?: string;
         description?: string;
         detailLink?: string;
@@ -15,8 +15,9 @@
 
     export class linkData
     {
-        from: string;
-        to: string;
-        key?: string;
+        from: number;
+        to: number;
+        key?: number;
+        category?: string;
     }
 }
