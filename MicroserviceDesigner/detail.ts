@@ -1,3 +1,4 @@
+
 namespace Details
 {
     var schemaDiagram: go.Diagram;
@@ -86,7 +87,7 @@ namespace Details
             $('#detail-url').val("");
 
         schemaDiagram.model = baseDiagram.model;
-        onlyShowAttributes();
+        showAttributes(thisNode);
 
         $('#detail-fromSchema').click(function ()
         {
@@ -99,33 +100,65 @@ namespace Details
         $('#detailModal').modal();
     }
 
-    function onlyShowAttributes()
+    function showAttributes(thisNode: data.nodeData)
     {
-        schemaDiagram.startTransaction();
-        schemaDiagram.nodes.each(function (node: go.Node)
-        {            
-            node.visible = (node.category == "Attribute");  
+        schemaDiagram.nodes.each(function (node: go.Node) { node.visible = false; });
+        showChildren(schemaDiagram.findNodeForKey(thisNode.key));
+    }
+
+    function showChildren(node: go.Node)
+    {
+        node.findTreeChildrenNodes().each(function (n: go.Node)
+        {
+            showChildren(n);
         });
-        schemaDiagram.commitTransaction();
+    }
+
+    function getChildren(diagram: go.Diagram, nodeData: data.nodeData)
+    {
+        var startNode = diagram.findNodeForData(nodeData);
+        var nodeResults: Array<data.nodeData> = [];
+        var linkResults: Array<data.linkData> = [];
+
+        var iterate = function (node: go.Node)
+        {
+            node.findTreeChildrenLinks().each(function (l: go.Link)
+            {
+                linkResults.push(l.data);
+            });
+            node.findTreeChildrenNodes().each(function (n: go.Node)
+            {
+                nodeResults.push(n.data);
+                iterate(n);
+            });
+        };
+
+        iterate(startNode);
+
+        return { nodeResults, linkResults }
     }
 
     function updateModelFromSchema(baseDiagram:go.Diagram, rootNode: data.nodeData, updatedSchemaNodes: Array<data.nodeData>, updatedSchemaLinks: Array<data.linkData>)
     {
+        console.log(schemaDiagram.nodes.count);
         schemaDiagram.startTransaction();
-        schemaDiagram.nodes.each(function (node: go.Node)
-        {
-            var nodeData = node.data as data.nodeData;
-            if (nodeData.category == "Attribute")
-            {
-                schemaDiagram.model.removeNodeData(nodeData);
-            }
-        });
+        //schemaDiagram.nodes.each(function (node: go.Node)
+        //{
+        //    var nodeData = node.data as data.nodeData;
+        //    if (nodeData.category == "Attribute")
+        //    {
+        //        schemaDiagram.model.removeNodeData(nodeData);
+        //    }
+        //});
+        var results = getChildren(schemaDiagram, rootNode);
+        schemaDiagram.model.removeNodeDataCollection(results.nodeResults);
+        (schemaDiagram.model as go.GraphLinksModel).removeLinkDataCollection(results.linkResults);
+        console.log(schemaDiagram.nodes.count);
 
         schemaDiagram.model.addNodeDataCollection(updatedSchemaNodes);
         (schemaDiagram.model as go.GraphLinksModel).addLinkDataCollection(updatedSchemaLinks);
         baseDiagram.nodes.each(function (node: go.Node) { if(node.category == "Attribute") node.visible = false; });
         schemaDiagram.commitTransaction();
-        console.log(schemaDiagram.model);
     }
 
     function initSchemaDiagram()
@@ -134,12 +167,14 @@ namespace Details
 
         schemaDiagram = gojs(go.Diagram, 'schemaDiagramDiv',
             {
-                layout: gojs(go.TreeLayout, { nodeSpacing: 3 }),
-                initialContentAlignment: go.Spot.Center,                
+                layout: gojs(go.TreeLayout, { nodeSpacing: 5 }),
+                contentAlignment: go.Spot.Center,
+                initialDocumentSpot: go.Spot.Center,
+                initialViewportSpot: go.Spot.Center
             });
 
         schemaDiagram.nodeTemplate = gojs(
-            go.Node, //TreeNode
+            go.Node, //TreeNode            
             { movable: false }, // user cannot move an individual node
             { selectionAdorned: false },
             gojs('TreeExpanderButton', {
@@ -157,11 +192,11 @@ namespace Details
             gojs(
                 go.Panel,
                 'Horizontal',
-                { position: new go.Point(16, 0) },
-                new go.Binding('background', 'isSelected', function (s)
-                {
-                    return s ? 'lightblue' : 'white';
-                }).ofObject(),
+                { position: new go.Point(16, 0), alignment: go.Spot.Center },
+                //new go.Binding('background', 'isSelected', function (s)
+                //{
+                //    return s ? 'lightblue' : 'white';
+                //}).ofObject(),
                 gojs(
                     go.TextBlock,
                     new go.Binding('text', 'name'))

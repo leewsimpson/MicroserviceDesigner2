@@ -59,7 +59,7 @@ var Details;
         else
             $('#detail-url').val("");
         schemaDiagram.model = baseDiagram.model;
-        onlyShowAttributes();
+        showAttributes(thisNode);
         $('#detail-fromSchema').click(function () {
             Details.loadFromSchema(thisNode, function (newNodes, newLinks) {
                 updateModelFromSchema(baseDiagram, thisNode, newNodes, newLinks);
@@ -69,33 +69,51 @@ var Details;
         $('#detailModal').modal();
     }
     Details.showDetails = showDetails;
-    function onlyShowAttributes() {
-        schemaDiagram.startTransaction();
-        schemaDiagram.nodes.each(function (node) {
-            node.visible = (node.category == "Attribute");
+    function showAttributes(thisNode) {
+        schemaDiagram.nodes.each(function (node) { node.visible = false; });
+        showChildren(schemaDiagram.findNodeForKey(thisNode.key));
+    }
+    function showChildren(node) {
+        node.findTreeChildrenNodes().each(function (n) {
+            showChildren(n);
         });
-        schemaDiagram.commitTransaction();
+    }
+    function getChildren(diagram, nodeData) {
+        var startNode = diagram.findNodeForData(nodeData);
+        var nodeResults = [];
+        var linkResults = [];
+        var iterate = function (node) {
+            node.findTreeChildrenLinks().each(function (l) {
+                linkResults.push(l.data);
+            });
+            node.findTreeChildrenNodes().each(function (n) {
+                nodeResults.push(n.data);
+                iterate(n);
+            });
+        };
+        iterate(startNode);
+        return { nodeResults, linkResults };
     }
     function updateModelFromSchema(baseDiagram, rootNode, updatedSchemaNodes, updatedSchemaLinks) {
+        console.log(schemaDiagram.nodes.count);
         schemaDiagram.startTransaction();
-        schemaDiagram.nodes.each(function (node) {
-            var nodeData = node.data;
-            if (nodeData.category == "Attribute") {
-                schemaDiagram.model.removeNodeData(nodeData);
-            }
-        });
+        var results = getChildren(schemaDiagram, rootNode);
+        schemaDiagram.model.removeNodeDataCollection(results.nodeResults);
+        schemaDiagram.model.removeLinkDataCollection(results.linkResults);
+        console.log(schemaDiagram.nodes.count);
         schemaDiagram.model.addNodeDataCollection(updatedSchemaNodes);
         schemaDiagram.model.addLinkDataCollection(updatedSchemaLinks);
         baseDiagram.nodes.each(function (node) { if (node.category == "Attribute")
             node.visible = false; });
         schemaDiagram.commitTransaction();
-        console.log(schemaDiagram.model);
     }
     function initSchemaDiagram() {
         var gojs = go.GraphObject.make;
         schemaDiagram = gojs(go.Diagram, 'schemaDiagramDiv', {
-            layout: gojs(go.TreeLayout, { nodeSpacing: 3 }),
-            initialContentAlignment: go.Spot.Center,
+            layout: gojs(go.TreeLayout, { nodeSpacing: 5 }),
+            contentAlignment: go.Spot.Center,
+            initialDocumentSpot: go.Spot.Center,
+            initialViewportSpot: go.Spot.Center
         });
         schemaDiagram.nodeTemplate = gojs(go.Node, { movable: false }, { selectionAdorned: false }, gojs('TreeExpanderButton', {
             width: 14,
@@ -108,9 +126,7 @@ var Details;
             _buttonFillOver: 'RoyalBlue',
             _buttonStrokeOver: null,
             _buttonFillPressed: null
-        }), gojs(go.Panel, 'Horizontal', { position: new go.Point(16, 0) }, new go.Binding('background', 'isSelected', function (s) {
-            return s ? 'lightblue' : 'white';
-        }).ofObject(), gojs(go.TextBlock, new go.Binding('text', 'name'))));
+        }), gojs(go.Panel, 'Horizontal', { position: new go.Point(16, 0), alignment: go.Spot.Center }, gojs(go.TextBlock, new go.Binding('text', 'name'))));
         schemaDiagram.linkTemplate = gojs(go.Link, {
             selectable: false,
             routing: go.Link.Orthogonal,
