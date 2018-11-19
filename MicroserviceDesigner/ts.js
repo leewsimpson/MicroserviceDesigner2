@@ -1,13 +1,15 @@
 var Details;
 (function (Details) {
-    var schemaDiagram;
+    var _schemaDiagram;
+    var _baseDiagram;
+    var _thisNode;
     class Detail {
     }
     Details.Detail = Detail;
     var callback;
     function init() {
         initSchemaDiagram();
-        schemaDiagram.model = new go.GraphLinksModel();
+        _schemaDiagram.model = new go.GraphLinksModel();
         $('#detail-btn-ok').on('click', function () {
             var type = $('#detail-type').val();
             var internalChecked = document.getElementById('detail-internal').checked;
@@ -25,14 +27,25 @@ var Details;
                 d.type = "Operation";
             }
             $('#detailModal').modal('hide');
-            callback(d, schemaDiagram.model.nodeDataArray, schemaDiagram.model.linkDataArray);
+            callback(d, _schemaDiagram.model.nodeDataArray, _schemaDiagram.model.linkDataArray);
         });
         $('#detail-btn-cancel').on('click', function () {
             $('#detailModal').modal('hide');
         });
+        $('#detail-fromSchema').click(function () {
+            Details.loadFromSchema(_thisNode, function (newNodes, newLinks) {
+                updateModelFromSchema(_baseDiagram, _thisNode, newNodes, newLinks);
+            });
+        });
+        $('#detail-schema-tab').click(function () {
+            _schemaDiagram.model = _baseDiagram.model;
+            showAttributes(_thisNode);
+        });
     }
     Details.init = init;
     function showDetails(baseDiagram, thisNode, cb) {
+        _baseDiagram = baseDiagram;
+        _thisNode = thisNode;
         if (thisNode.category == 'Operation' || thisNode.category == 'InternalOperation')
             $('#detail-internal-div').show();
         else
@@ -58,64 +71,60 @@ var Details;
             $('#detail-url').val(thisNode.detailLink.toString());
         else
             $('#detail-url').val("");
-        schemaDiagram.model = baseDiagram.model;
-        showAttributes(thisNode);
-        $('#detail-fromSchema').click(function () {
-            Details.loadFromSchema(thisNode, function (newNodes, newLinks) {
-                updateModelFromSchema(baseDiagram, thisNode, newNodes, newLinks);
-            });
-        });
         callback = cb;
         $('#detailModal').modal();
     }
     Details.showDetails = showDetails;
     function showAttributes(thisNode) {
-        schemaDiagram.nodes.each(function (node) { node.visible = false; });
-        showChildren(schemaDiagram.findNodeForKey(thisNode.key));
-    }
-    function showChildren(node) {
-        node.findTreeChildrenNodes().each(function (n) {
-            showChildren(n);
+        _schemaDiagram.nodes.each(function (node) { node.visible = false; });
+        var results = getChildren(_schemaDiagram, thisNode, function (n) {
+            return n.data.category == 'Attribute';
         });
+        results.nodeResults.forEach(function (n) { _schemaDiagram.findNodeForKey(n.key).visible = true; });
     }
-    function getChildren(diagram, nodeData) {
-        var startNode = diagram.findNodeForData(nodeData);
+    function getChildren(diagram, nodeData, eval) {
+        var startNode = diagram.findNodeForKey(nodeData.key);
+        console.log(nodeData.key);
         var nodeResults = [];
         var linkResults = [];
         var iterate = function (node) {
-            node.findTreeChildrenLinks().each(function (l) {
-                linkResults.push(l.data);
-            });
             node.findTreeChildrenNodes().each(function (n) {
-                nodeResults.push(n.data);
-                iterate(n);
+                if (eval(n)) {
+                    nodeResults.push(n.data);
+                    console.log('node: ' + n.data.key);
+                    n.findTreeChildrenLinks().each(function (l) {
+                        linkResults.push(l.data);
+                        console.log('link from ' + l.data.from + ' to ' + l.data.to);
+                    });
+                    iterate(n);
+                }
             });
         };
         iterate(startNode);
         return { nodeResults, linkResults };
     }
     function updateModelFromSchema(baseDiagram, rootNode, updatedSchemaNodes, updatedSchemaLinks) {
-        console.log(schemaDiagram.nodes.count);
-        schemaDiagram.startTransaction();
-        var results = getChildren(schemaDiagram, rootNode);
-        schemaDiagram.model.removeNodeDataCollection(results.nodeResults);
-        schemaDiagram.model.removeLinkDataCollection(results.linkResults);
-        console.log(schemaDiagram.nodes.count);
-        schemaDiagram.model.addNodeDataCollection(updatedSchemaNodes);
-        schemaDiagram.model.addLinkDataCollection(updatedSchemaLinks);
+        _schemaDiagram.startTransaction();
+        var results = getChildren(_schemaDiagram, rootNode, function (n) {
+            return n.data.category == 'Attribute';
+        });
+        _schemaDiagram.model.removeNodeDataCollection(results.nodeResults);
+        _schemaDiagram.model.removeLinkDataCollection(results.linkResults);
+        _schemaDiagram.model.addNodeDataCollection(updatedSchemaNodes);
+        _schemaDiagram.model.addLinkDataCollection(updatedSchemaLinks);
         baseDiagram.nodes.each(function (node) { if (node.category == "Attribute")
             node.visible = false; });
-        schemaDiagram.commitTransaction();
+        _schemaDiagram.commitTransaction();
     }
     function initSchemaDiagram() {
         var gojs = go.GraphObject.make;
-        schemaDiagram = gojs(go.Diagram, 'schemaDiagramDiv', {
+        _schemaDiagram = gojs(go.Diagram, 'schemaDiagramDiv', {
             layout: gojs(go.TreeLayout, { nodeSpacing: 5 }),
             contentAlignment: go.Spot.Center,
             initialDocumentSpot: go.Spot.Center,
             initialViewportSpot: go.Spot.Center
         });
-        schemaDiagram.nodeTemplate = gojs(go.Node, { movable: false }, { selectionAdorned: false }, gojs('TreeExpanderButton', {
+        _schemaDiagram.nodeTemplate = gojs(go.Node, { movable: false }, { selectionAdorned: false }, gojs('TreeExpanderButton', {
             width: 14,
             height: 14,
             'ButtonIcon.stroke': 'white',
@@ -127,7 +136,7 @@ var Details;
             _buttonStrokeOver: null,
             _buttonFillPressed: null
         }), gojs(go.Panel, 'Horizontal', { position: new go.Point(16, 0), alignment: go.Spot.Center }, gojs(go.TextBlock, new go.Binding('text', 'name'))));
-        schemaDiagram.linkTemplate = gojs(go.Link, {
+        _schemaDiagram.linkTemplate = gojs(go.Link, {
             selectable: false,
             routing: go.Link.Orthogonal,
             fromEndSegmentLength: 4,

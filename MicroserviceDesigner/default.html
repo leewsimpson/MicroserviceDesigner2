@@ -123,7 +123,7 @@
             </ul>
         </div>
     </nav>
-    <div class="" style="background-color:white;position: absolute;top:60px;bottom:0px;right:0;left:0;overflow:hidden;">
+    <div class="" style="background-color:white;position: absolute;top:60px;bottom:100px;right:0;left:0;overflow:hidden;">
         <div id="myDiagramDiv" style="background-color:white;position: absolute;top:0px;bottom:0;right:0;left:0"></div>
     </div>
     <div class="modal fade" tabindex="-1" role="dialog" aria-labelledby="mySmallModalLabel" aria-hidden="true" id="confirmModal">
@@ -179,7 +179,7 @@
                                 </div>
                             </div>
                             <div class="tab-pane fade" id="profile" role="tabpanel" aria-labelledby="profile-tab">
-                                <div class="md-form mb-4" id="detail-schema-div" >
+                                <div class="md-form mb-4" id="detail-schema-div">
                                     <label data-error="wrong" data-success="right" for="detail-description">JSON Schema</label>
                                     <textarea rows="7" id="detail-schema" class="form-control validate" style="font-family:Consolas,Monaco,Lucida Console,Liberation Mono,DejaVu Sans Mono,Bitstream Vera Sans Mono,Courier New, monospace;"></textarea>
                                     <button id="detail-fromSchema" class="btn btn-primary">Load from Schema</button>
@@ -200,8 +200,7 @@
         </div>
     </div>
 
-
-    <div id="dataDebugger" style="position: absolute; bottom:10px"></div>
+    <textarea id="dataDebugger" rows="4" class="form-control validate" style="position: absolute; bottom:0px;font-family:Consolas,Monaco,Lucida Console,Liberation Mono,DejaVu Sans Mono,Bitstream Vera Sans Mono,Courier New, monospace;"></textarea>
 
     <div id="mapper" style="position: absolute; top:90px;left:40px; right:40px; background-color:rgba(236, 235, 235, 0.904);bottom:40px;z-index: 100">
         <div class="modal-headerx" style="position: absolute; top:0px;">
