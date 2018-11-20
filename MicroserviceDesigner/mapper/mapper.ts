@@ -1,6 +1,6 @@
 namespace mapper
 {
-
+    var _baseDiagram: go.Diagram;
     var mapperDiagram: go.Diagram;
     var callback: () => void;
 
@@ -22,7 +22,7 @@ namespace mapper
         });
     }
 
-    export function initMapper()
+    export function init()
     {
         setupModal();
         $('#mapper').hide();
@@ -152,104 +152,33 @@ namespace mapper
                         margin: new go.Margin(5, 5, 0, 5),
                         stroke: 'DodgerBlue'
                     },
-                    new go.Binding('text')
+                    new go.Binding('name')
                 ),
                 gojs(go.Placeholder, { padding: 5 })
             )
         );
     }
 
-    export function loadMapper(from: data.nodeData, to: data.nodeData, callback)
+    export function showMapper(baseDiagram: go.Diagram, from: data.nodeData, to: data.nodeData, callback)
     {
-        console.log(from);
         callback = callback;
-        var nodeDataArray = [
-            { isGroup: true, key: -1, text: 'From : ' + from.name, xy: '0 0', group: 0 },
-            { isGroup: true, key: -2, text: 'To : ' + to.name, xy: '300 0', group: 0 }
-        ];
-        var linkDataArray = [
-            { from: 6, to: 1012, category: 'Mapping' },
-            { from: 4, to: 1006, category: 'Mapping' },
-            { from: 9, to: 1004, category: 'Mapping' },
-            { from: 1, to: 1009, category: 'Mapping' },
-            { from: 14, to: 1010, category: 'Mapping' }
-        ];
+        mapperDiagram.model = baseDiagram.model;
 
-        // initialize tree on left side
-        var root = { isGroup: false, key: 0, text: 'x', xy: '', group: -1, name: "root" };
-        nodeDataArray.push(root);
-        var json = JSON.parse(from.schema) as JSON
+        //var nodeDataArray = [
+        //    { isGroup: true, key: -1, text: 'From : ' + from.name, xy: '0 0', group: 0 },
+        //    { isGroup: true, key: -2, text: 'To : ' + to.name, xy: '300 0', group: 0 }
+        //];
 
-        //for (var i = 0; i < 11;) {
-        //    i = makeTree(
-        //        3,
-        //        i,
-        //        17,
-        //        nodeDataArray,
-        //        linkDataArray,
-        //        root,
-        //        -1,
-        //        root.key
-        //    );
-        //}
+        mapperDiagram.nodes.each(function (node: go.Node) { node.visible = false; });
+        mapperDiagram.findNodeForKey(from.key).visible = true;
+        mapperDiagram.findNodeForKey(to.key).visible = true;
+        
+        var results1 = Util.getChildren(mapperDiagram, from, function (n: go.Node) { return (n.data as data.nodeData).category == 'Attribute'; });
+        var results2 = Util.getChildren(mapperDiagram, to, function (n: go.Node) { return (n.data as data.nodeData).category == 'Attribute'; });
 
-        // initialize tree on right side
-        var root2 = { isGroup: false, key: 1000, text: '', xy: '', group: -2, name: "root" };
-        nodeDataArray.push(root2);
-        for (var i = 0; i < 15;)
-        {
-            i = makeTree(
-                3,
-                i,
-                15,
-                nodeDataArray,
-                linkDataArray,
-                root2,
-                -2,
-                root2.key
-            );
-        }
+        //todo link types
 
+        results1.nodeResults.forEach(function (n: data.nodeData) { mapperDiagram.findNodeForKey(n.key).visible = true});
+        results2.nodeResults.forEach(function (n: data.nodeData) { mapperDiagram.findNodeForKey(n.key).visible = true});
     }
-
-    // help create a random tree structure
-    function makeTree(
-        level,
-        count,
-        max,
-        nodeDataArray,
-        linkDataArray,
-        parentdata,
-        groupkey,
-        rootkey
-    )
-    {
-        var numchildren = Math.floor(Math.random() * 10);
-        for (var i = 0; i < numchildren; i++)
-        {
-            if (count >= max) return count;
-            count++;
-            var childdata = { key: rootkey + count, group: groupkey };
-            nodeDataArray.push(childdata);
-            linkDataArray.push({ from: parentdata.key, to: childdata.key });
-            if (level > 0 && Math.random() > 0.5)
-            {
-                count = makeTree(
-                    level - 1,
-                    count,
-                    max,
-                    nodeDataArray,
-                    linkDataArray,
-                    childdata,
-                    groupkey,
-                    rootkey
-                );
-            }
-        }
-        return count;
-    }
-
-    var id: number = 0;
-
-   
 }

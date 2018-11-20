@@ -113,45 +113,12 @@ namespace Details
     function showAttributes(thisNode: data.nodeData)
     {
         _schemaDiagram.nodes.each(function (node: go.Node) { node.visible = false; });
-        var results = getChildren(_schemaDiagram, thisNode, function (n: go.Node)
+        var results = Util.getChildren(_schemaDiagram, thisNode, function (n: go.Node)
         {
             return (n.data as data.nodeData).category == 'Attribute';
         });
         
         results.nodeResults.forEach(function (n: data.nodeData) { _schemaDiagram.findNodeForKey(n.key).visible = true });
-    }
-
-    function getChildren(diagram: go.Diagram, nodeData: data.nodeData, eval)
-    {
-        var startNode = diagram.findNodeForKey(nodeData.key);
-        console.log(nodeData.key);
-        var nodeResults: Array<data.nodeData> = [];
-        var linkResults: Array<data.linkData> = [];
-
-        var iterate = function (node: go.Node)
-        {
-            node.findTreeChildrenNodes().each(function (n: go.Node)
-            {
-                if (eval(n))
-                {
-                    nodeResults.push(n.data);
-                    console.log('node: ' + n.data.key);
-
-                    n.findTreeChildrenLinks().each(function (l: go.Link)
-                    {
-                        linkResults.push(l.data);
-                        console.log('link from ' + l.data.from + ' to ' + l.data.to);
-                    });
-
-                    iterate(n);
-                }
-            });
-        };
-
-        iterate(startNode);
-
-
-        return { nodeResults, linkResults }
     }
 
     function updateModelFromSchema(baseDiagram: go.Diagram, rootNode: data.nodeData, updatedSchemaNodes: Array<data.nodeData>, updatedSchemaLinks: Array<data.linkData>)
@@ -166,7 +133,7 @@ namespace Details
         //        schemaDiagram.model.removeNodeData(nodeData);
         //    }
         //});
-        var results = getChildren(_schemaDiagram, rootNode, function (n: go.Node)
+        var results = Util.getChildren(_schemaDiagram, rootNode, function (n: go.Node)
         {
             return (n.data as data.nodeData).category == 'Attribute';
         });
@@ -194,6 +161,44 @@ namespace Details
                 initialDocumentSpot: go.Spot.Center,
                 initialViewportSpot: go.Spot.Center
             });
+
+        _schemaDiagram.groupTemplate = gojs(
+            go.Group,
+            'Auto',
+            new go.Binding('position', 'xy', go.Point.parse).makeTwoWay(
+                go.Point.stringify
+            ),
+            {
+                deletable: false,
+                layout: gojs(go.TreeLayout, {
+                    alignment: go.TreeLayout.AlignmentStart,
+                    angle: 0,
+                    compaction: go.TreeLayout.CompactionNone,
+                    layerSpacing: 20,
+                    layerSpacingParentOverlap: 1,
+                    nodeIndentPastParent: 1.0,
+                    nodeSpacing: 1,
+                    setsPortSpot: false,
+                    setsChildPortSpot: false
+                })
+            },
+            gojs(go.Shape, { fill: 'white', stroke: 'lightgray' }),
+            gojs(
+                go.Panel,
+                'Vertical',
+                { defaultAlignment: go.Spot.Left },
+                gojs(
+                    go.TextBlock,
+                    {
+                        font: 'bold 12pt Segoe UI',
+                        margin: new go.Margin(5, 5, 0, 5),
+                        stroke: 'DodgerBlue'
+                    },
+                    new go.Binding('name')
+                ),
+                gojs(go.Placeholder, { padding: 5 })
+            )
+        );
 
         _schemaDiagram.nodeTemplate = gojs(
             go.Node, //TreeNode            
@@ -252,7 +257,7 @@ namespace Details
             {
                 var nodeDataArray: Array<data.nodeData> = new Array<data.nodeData>();
                 var linkDataArray: Array<data.linkData> = new Array<data.linkData>();
-                recurse(schema, nodeDataArray, linkDataArray, root);
+                recurse(root.key, schema, nodeDataArray, linkDataArray, root);
 
                 done(nodeDataArray, linkDataArray);
             })
@@ -262,19 +267,19 @@ namespace Details
             });
     }
 
-    function recurse(schema: any, nodeDataArray, linkDataArray, parentdata: data.nodeData)
+    function recurse(group: number, schema: any, nodeDataArray, linkDataArray, parentdata: data.nodeData)
     {
         for (var item in schema.properties)
         {
             id++;
-            var childdata = { key: id, name: item, category: "Attribute" };
+            var childdata = { key: id, name: item, category: "Attribute", group: group};
             nodeDataArray.push(childdata);
             linkDataArray.push({ from: parentdata.key, to: childdata.key });
             //console.log(id + ' - ' + item + ' (' + schema.properties[item].type + ') P' + parentdata.key);
 
             if (schema.properties[item].properties)
             {
-                recurse(schema.properties[item], nodeDataArray, linkDataArray, childdata);
+                recurse(group, schema.properties[item], nodeDataArray, linkDataArray, childdata);
             }
         }
     }

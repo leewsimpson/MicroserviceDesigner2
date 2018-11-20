@@ -6,11 +6,12 @@ namespace Template
     {
         var gojs = go.GraphObject.make;
 
-        return gojs(go.Node, "Spot",
+        return gojs(go.Group, "Spot",
             {
                 width: 100,
                 height: 50,
                 toolTip: toolTip(),
+                doubleClick: function (e: go.InputEvent, obj: go.Part) { showDetails(e, obj) },
                 contextMenu: gojs(go.Adornment, "Vertical",
                     contextMenuFocus(),
                     contextMenuHide(),

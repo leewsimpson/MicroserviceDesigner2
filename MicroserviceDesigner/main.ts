@@ -56,20 +56,20 @@ async function init()
             contentAlignment: go.Spot.Center,
             "undoManager.isEnabled": true,
             "draggingTool.isGridSnapEnabled": true,
-            "commandHandler.canDeleteSelection": function ()
-            {
-                $('#modal-btn-si').on('click', function ()
-                {
-                    $('#confirmModal').modal('hide');
-                    return go.CommandHandler.prototype.canDeleteSelection.call(myDiagram.commandHandler);
-                });
+            //"commandHandler.canDeleteSelection": function ()
+            //{
+            //    $('#modal-btn-si').on('click', function ()
+            //    {
+            //        $('#confirmModal').modal('hide');
+            //        return go.CommandHandler.prototype.canDeleteSelection.call(myDiagram.commandHandler);
+            //    });
 
-                $('#modal-btn-no').on('click', function ()
-                {
-                    $('#confirmModal').modal('hide');
-                });
-                $('#confirmModal').modal();
-            },
+            //    $('#modal-btn-no').on('click', function ()
+            //    {
+            //        $('#confirmModal').modal('hide');
+            //    });
+            //    $('#confirmModal').modal();
+            //},
             allowDrop: true,
             mouseDrop: function (e: any) 
             {
@@ -168,7 +168,8 @@ async function init()
                     var data: data.nodeData =
                     {
                         category: "System",
-                        name: "newSystem"
+                        name: "newSystem",
+                        isGroup: true,
                     };
                     diagram.model.addNodeData(data);
                     var part = diagram.findPartForData(data);
@@ -185,10 +186,10 @@ async function init()
     myDiagram.nodeTemplateMap.add("InternalOperation", Template.internalOperation());
     myDiagram.nodeTemplateMap.add("Event", Template.event());
     myDiagram.groupTemplateMap.add("Domain", Template.domain());
-    myDiagram.nodeTemplateMap.add("System", Template.system());
+    myDiagram.groupTemplateMap.add("System", Template.system());
     myDiagram.linkTemplateMap.add("", Template.link());
 
-    mapper.initMapper();
+    mapper.init();
 };
 
 function getCategory(dataString: string, category: string)

@@ -12,6 +12,13 @@ namespace Template
                 curve: go.Link.JumpOver,
                 corner: 5,
                 toolTip: toolTip(),
+                doubleClick: function (e: go.InputEvent, obj: go.Part)
+                {
+                    var from = e.diagram.model.findNodeDataForKey(obj.part.data.from);
+                    var to = e.diagram.model.findNodeDataForKey(obj.part.data.to);
+                    $('#mapper').show();
+                    mapper.showMapper(myDiagram, from, to, function () { console.log('mapped'); });
+                },
                 contextMenu: gojs(go.Adornment, "Vertical",
                     gojs("ContextMenuButton", gojs(go.TextBlock, "Mapping"), {
                         click: function (e: go.InputEvent, obj: go.Part)
@@ -19,7 +26,7 @@ namespace Template
                             var from = e.diagram.model.findNodeDataForKey(obj.part.data.from);
                             var to = e.diagram.model.findNodeDataForKey(obj.part.data.to);
                             $('#mapper').show();
-                            mapper.loadMapper(from, to, function () { console.log('mapped'); });
+                            mapper.showMapper(myDiagram, from, to, function () { console.log('mapped'); });
                         }
                     })
                 )

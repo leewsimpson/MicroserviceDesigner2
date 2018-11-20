@@ -63,22 +63,27 @@
         return gojs("ContextMenuButton", gojs(go.TextBlock, "Details"), {
             click: function (e: go.InputEvent, obj: go.Part)
             {
-                var node: data.nodeData = obj.part.data;
-                var diagram: go.Diagram = e.diagram;
-
-                Details.showDetails(diagram, node,
-                    function (detail)
-                    {
-                        diagram.startTransaction();
-                        diagram.model.setDataProperty(node, "name", detail.name);
-                        diagram.model.setDataProperty(node, "detailLink", detail.detailLink);
-                        diagram.model.setDataProperty(node, "description", detail.description);
-                        diagram.model.setDataProperty(node, "schema", detail.schema);
-                        diagram.model.setDataProperty(node, "category", detail.type);                        
-                        diagram.commitTransaction();
-                    })
+                showDetails(e, obj);
             }
         })
+    }
+
+    export function showDetails(e: go.InputEvent, obj: go.Part)
+    {
+        var node: data.nodeData = obj.part.data;
+        var diagram: go.Diagram = e.diagram;
+
+        Details.showDetails(diagram, node,
+            function (detail)
+            {
+                diagram.startTransaction();
+                diagram.model.setDataProperty(node, "name", detail.name);
+                diagram.model.setDataProperty(node, "detailLink", detail.detailLink);
+                diagram.model.setDataProperty(node, "description", detail.description);
+                diagram.model.setDataProperty(node, "schema", detail.schema);
+                diagram.model.setDataProperty(node, "category", detail.type);
+                diagram.commitTransaction();
+            })
     }
 
     export function contextMenuFocus(): go.Adornment

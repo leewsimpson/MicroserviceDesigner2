@@ -20,6 +20,39 @@ namespace Util
         myDiagram.commitTransaction();
     }
 
+    export function getChildren(diagram: go.Diagram, nodeData: data.nodeData, eval)
+    {
+        var startNode = diagram.findNodeForKey(nodeData.key);
+        console.log(nodeData.key);
+        var nodeResults: Array<data.nodeData> = [];
+        var linkResults: Array<data.linkData> = [];
+
+        var iterate = function (node: go.Node)
+        {
+            node.findTreeChildrenNodes().each(function (n: go.Node)
+            {
+                if (eval(n))
+                {
+                    nodeResults.push(n.data);
+                    console.log('node: ' + n.data.key);
+
+                    n.findLinksConnected().each(function (l: go.Link)
+                    {
+                        linkResults.push(l.data);
+                        console.log('link from ' + l.data.from + ' to ' + l.data.to);
+                    });
+
+                    iterate(n);
+                }
+            });
+        };
+
+        iterate(startNode);
+
+
+        return { nodeResults, linkResults }
+    }
+
     export function focusOnAPI(diagram: go.Diagram, key: number)
     {
         showHideAll(diagram, false, true);

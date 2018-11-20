@@ -15,6 +15,7 @@ namespace Template
                     width: 20,
                     height: 20,
                     toolTip: toolTip(),
+                    doubleClick: function (e: go.InputEvent, obj: go.Part) { showDetails(e, obj) },
                     contextMenu: gojs(go.Adornment, "Vertical",
                         contextMenuFocus(),
                         contextMenuHide(),
