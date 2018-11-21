@@ -18,6 +18,7 @@
         from: number;
         to: number;
         key?: number;
+        group: number;
         category?: string;
     }
 }

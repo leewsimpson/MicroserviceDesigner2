@@ -336,6 +336,7 @@ async function load()
     else
     {
         myDiagram.model = go.Model.fromJson(data);
+        myDiagram.nodes.each((n) => { if (n.data.category == "Attribute") n.visible = false;});
     }
     dataString = data;
     unsavedChanges(false);

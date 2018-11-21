@@ -111,6 +111,7 @@
   <ItemGroup>
     <Content Include="test cases.txt" />
     <Content Include="web.config" />
+    <Content Include="test.json" />
     <None Include="web.Debug.config">
       <DependentUpon>web.config</DependentUpon>
     </None>

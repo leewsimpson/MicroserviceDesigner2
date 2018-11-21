@@ -27,9 +27,11 @@ var Details;
                 d.type = "Operation";
             }
             $('#detailModal').modal('hide');
+            $('a[data-toggle="tab"]:first').tab('show');
             callback(d, _schemaDiagram.model.nodeDataArray, _schemaDiagram.model.linkDataArray);
         });
         $('#detail-btn-cancel').on('click', function () {
+            $('a[data-toggle="tab"]:first').tab('show');
             $('#detailModal').modal('hide');
         });
         $('#detail-fromSchema').click(function () {
@@ -50,7 +52,6 @@ var Details;
             $('#detail-internal-div').show();
         else
             $('#detail-internal-div').hide();
-        $('#home-tab').click();
         if (thisNode.category == 'Operation' || thisNode.category == 'InternalOperation' || thisNode.category == 'System' || thisNode.category == 'Event')
             document.getElementById('detail-schema-tab').hidden = false;
         else
@@ -77,18 +78,18 @@ var Details;
     Details.showDetails = showDetails;
     function showAttributes(thisNode) {
         _schemaDiagram.nodes.each(function (node) { node.visible = false; });
-        var results = Util.getChildren(_schemaDiagram, thisNode, function (n) {
-            return n.data.category == 'Attribute';
-        });
-        results.nodeResults.forEach(function (n) { _schemaDiagram.findNodeForKey(n.key).visible = true; });
+        _schemaDiagram.findNodeForKey(thisNode.key).visible = true;
+        _schemaDiagram.nodes.each((n) => { if (n.data.group == thisNode.key)
+            n.visible = true; });
     }
     function updateModelFromSchema(baseDiagram, rootNode, updatedSchemaNodes, updatedSchemaLinks) {
         _schemaDiagram.startTransaction();
-        var results = Util.getChildren(_schemaDiagram, rootNode, function (n) {
-            return n.data.category == 'Attribute';
-        });
-        _schemaDiagram.model.removeNodeDataCollection(results.nodeResults);
-        _schemaDiagram.model.removeLinkDataCollection(results.linkResults);
+        var glm = _schemaDiagram.model;
+        var removeNodes = _schemaDiagram.model.nodeDataArray.filter((n) => { return (n.group == rootNode.key); });
+        var removeLinks = glm.linkDataArray.filter((l) => { return (l.group == rootNode.key); });
+        _schemaDiagram.model.removeNodeDataCollection(removeNodes);
+        glm.removeLinkDataCollection(removeLinks);
+        console.log(glm.linkDataArray);
         _schemaDiagram.model.addNodeDataCollection(updatedSchemaNodes);
         _schemaDiagram.model.addLinkDataCollection(updatedSchemaLinks);
         baseDiagram.nodes.each(function (node) { if (node.category == "Attribute")
@@ -103,24 +104,21 @@ var Details;
             initialDocumentSpot: go.Spot.Center,
             initialViewportSpot: go.Spot.Center
         });
-        _schemaDiagram.groupTemplate = gojs(go.Group, 'Auto', new go.Binding('position', 'xy', go.Point.parse).makeTwoWay(go.Point.stringify), {
-            deletable: false,
-            layout: gojs(go.TreeLayout, {
-                alignment: go.TreeLayout.AlignmentStart,
-                angle: 0,
-                compaction: go.TreeLayout.CompactionNone,
-                layerSpacing: 20,
-                layerSpacingParentOverlap: 1,
-                nodeIndentPastParent: 1.0,
-                nodeSpacing: 1,
-                setsPortSpot: false,
-                setsChildPortSpot: false
-            })
-        }, gojs(go.Shape, { fill: 'white', stroke: 'lightgray' }), gojs(go.Panel, 'Vertical', { defaultAlignment: go.Spot.Left }, gojs(go.TextBlock, {
-            font: 'bold 12pt Segoe UI',
-            margin: new go.Margin(5, 5, 0, 5),
-            stroke: 'DodgerBlue'
-        }, new go.Binding('name')), gojs(go.Placeholder, { padding: 5 })));
+        _schemaDiagram.groupTemplate =
+            gojs(go.Group, "Auto", new go.Binding("position", "xy", go.Point.parse).makeTwoWay(go.Point.stringify), {
+                deletable: false,
+                layout: gojs(go.TreeLayout, {
+                    alignment: go.TreeLayout.AlignmentStart,
+                    angle: 0,
+                    compaction: go.TreeLayout.CompactionNone,
+                    layerSpacing: 16,
+                    layerSpacingParentOverlap: 1,
+                    nodeIndentPastParent: 1.0,
+                    nodeSpacing: 0,
+                    setsPortSpot: false,
+                    setsChildPortSpot: false
+                })
+            }, gojs(go.Shape, { fill: "white", stroke: "lightgray" }), gojs(go.Panel, "Vertical", { defaultAlignment: go.Spot.Left }, gojs(go.TextBlock, { font: "bold 14pt sans-serif", margin: new go.Margin(5, 5, 0, 5) }, new go.Binding("text")), gojs(go.Placeholder, { padding: 5 })));
         _schemaDiagram.nodeTemplate = gojs(go.Node, { movable: false }, { selectionAdorned: false }, gojs('TreeExpanderButton', {
             width: 14,
             height: 14,
@@ -142,9 +140,10 @@ var Details;
             toSpot: go.Spot.Left
         }, gojs(go.Shape, { stroke: 'lightgray' }));
     }
-    var id = 1000;
+    var id;
     function loadFromSchema(root, done) {
         var json = JSON.parse($('#detail-schema').val());
+        id = root.key * 10000;
         $RefParser.dereference(json)
             .then(function (schema) {
             var nodeDataArray = new Array();
@@ -162,7 +161,8 @@ var Details;
             id++;
             var childdata = { key: id, name: item, category: "Attribute", group: group };
             nodeDataArray.push(childdata);
-            linkDataArray.push({ from: parentdata.key, to: childdata.key });
+            if (parentdata.key != group)
+                linkDataArray.push({ from: parentdata.key, to: childdata.key, group: group });
             if (schema.properties[item].properties) {
                 recurse(group, schema.properties[item], nodeDataArray, linkDataArray, childdata);
             }
@@ -419,6 +419,8 @@ function load() {
         }
         else {
             myDiagram.model = go.Model.fromJson(data);
+            myDiagram.nodes.each((n) => { if (n.data.category == "Attribute")
+                n.visible = false; });
         }
         dataString = data;
         unsavedChanges(false);
@@ -456,26 +458,60 @@ var mapper;
         $('#mapper').hide();
         var gojs = go.GraphObject.make;
         mapperDiagram = gojs(go.Diagram, 'mapperDiv', {
+            layout: gojs(go.TreeLayout, { nodeSpacing: 5 }),
+            contentAlignment: go.Spot.Center,
+            initialDocumentSpot: go.Spot.Center,
+            initialViewportSpot: go.Spot.Center
+        });
+        mapperDiagram.groupTemplate =
+            gojs(go.Group, "Auto", new go.Binding("position", "xy", go.Point.parse).makeTwoWay(go.Point.stringify), {
+                deletable: false,
+                layout: gojs(go.TreeLayout, {
+                    alignment: go.TreeLayout.AlignmentStart,
+                    angle: 0,
+                    compaction: go.TreeLayout.CompactionNone,
+                    layerSpacing: 16,
+                    layerSpacingParentOverlap: 1,
+                    nodeIndentPastParent: 1.0,
+                    nodeSpacing: 0,
+                    setsPortSpot: false,
+                    setsChildPortSpot: false
+                })
+            }, gojs(go.Shape, { fill: "white", stroke: "lightgray" }), gojs(go.Panel, "Vertical", { defaultAlignment: go.Spot.Left }, gojs(go.TextBlock, { font: "bold 14pt sans-serif", margin: new go.Margin(5, 5, 0, 5) }, new go.Binding("text")), gojs(go.Placeholder, { padding: 5 })));
+        mapperDiagram.nodeTemplate = gojs(go.Node, { movable: false }, { selectionAdorned: false }, gojs('TreeExpanderButton', {
+            width: 14,
+            height: 14,
+            'ButtonIcon.stroke': 'white',
+            'ButtonIcon.strokeWidth': 2,
+            'ButtonBorder.fill': 'DodgerBlue',
+            'ButtonBorder.stroke': null,
+            'ButtonBorder.figure': 'Rectangle',
+            _buttonFillOver: 'RoyalBlue',
+            _buttonStrokeOver: null,
+            _buttonFillPressed: null
+        }), gojs(go.Panel, 'Horizontal', { position: new go.Point(16, 0), alignment: go.Spot.Center }, gojs(go.TextBlock, new go.Binding('text', 'name'))));
+        mapperDiagram.linkTemplate = gojs(go.Link, {
+            selectable: false,
+            routing: go.Link.Orthogonal,
+            fromEndSegmentLength: 4,
+            toEndSegmentLength: 4,
+            fromSpot: new go.Spot(0.001, 1, 7, 0),
+            toSpot: go.Spot.Left
+        }, gojs(go.Shape, { stroke: 'lightgray' }));
+    }
+    mapper.init = init;
+    function oldinit() {
+        setupModal();
+        $('#mapper').hide();
+        var gojs = go.GraphObject.make;
+        mapperDiagram = gojs(go.Diagram, 'mapperDiv', {
             'commandHandler.copiesTree': true,
             'commandHandler.deletesTree': true,
             'linkingTool.archetypeLinkData': { category: 'Mapping' },
-            'linkingTool.linkValidation': checkLink,
-            'relinkingTool.linkValidation': checkLink,
             initialContentAlignment: go.Spot.Center,
             'undoManager.isEnabled': true
         });
-        function checkLink(fromNode, toNode) {
-            if (fromNode.containingGroup === null || fromNode.containingGroup.data.key !== -1)
-                return false;
-            if (toNode.containingGroup === null || toNode.containingGroup.data.key !== -2)
-                return false;
-            return true;
-        }
-        mapperDiagram.nodeTemplate = gojs(go.Node, { movable: false }, { selectionAdorned: false }, new go.Binding('fromLinkable', 'group', function (k) {
-            return k === -1;
-        }), new go.Binding('toLinkable', 'group', function (k) {
-            return k === -2;
-        }), gojs('TreeExpanderButton', {
+        mapperDiagram.nodeTemplate = gojs(go.Node, { movable: false }, { selectionAdorned: false }, gojs('TreeExpanderButton', {
             width: 14,
             height: 14,
             'ButtonIcon.stroke': 'white',
@@ -521,17 +557,17 @@ var mapper;
             stroke: 'DodgerBlue'
         }, new go.Binding('name')), gojs(go.Placeholder, { padding: 5 })));
     }
-    mapper.init = init;
+    mapper.oldinit = oldinit;
     function showMapper(baseDiagram, from, to, callback) {
         callback = callback;
         mapperDiagram.model = baseDiagram.model;
         mapperDiagram.nodes.each(function (node) { node.visible = false; });
         mapperDiagram.findNodeForKey(from.key).visible = true;
         mapperDiagram.findNodeForKey(to.key).visible = true;
-        var results1 = Util.getChildren(mapperDiagram, from, function (n) { return n.data.category == 'Attribute'; });
-        var results2 = Util.getChildren(mapperDiagram, to, function (n) { return n.data.category == 'Attribute'; });
-        results1.nodeResults.forEach(function (n) { mapperDiagram.findNodeForKey(n.key).visible = true; });
-        results2.nodeResults.forEach(function (n) { mapperDiagram.findNodeForKey(n.key).visible = true; });
+        mapperDiagram.nodes.each((n) => { if (n.data.group == from.group || n.data.group == to.group)
+            n.visible = true; console.log(n.data); });
+        mapperDiagram.links.each((l) => { if (l.data.group == from.group || l.data.group == to.group)
+            l.visible = true; });
     }
     mapper.showMapper = showMapper;
 })(mapper || (mapper = {}));

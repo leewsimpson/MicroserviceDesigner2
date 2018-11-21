@@ -44,12 +44,14 @@ namespace Details
             }
 
             $('#detailModal').modal('hide');
+            $('a[data-toggle="tab"]:first').tab('show');
 
             callback(d, _schemaDiagram.model.nodeDataArray as Array<data.nodeData>, (_schemaDiagram.model as go.GraphLinksModel).linkDataArray as Array<data.linkData>);
         });
 
         $('#detail-btn-cancel').on('click', function ()
         {
+            $('a[data-toggle="tab"]:first').tab('show');
             $('#detailModal').modal('hide');
         });
 
@@ -77,7 +79,8 @@ namespace Details
             $('#detail-internal-div').show()
         else
             $('#detail-internal-div').hide()
-        $('#home-tab').click();
+
+
         if (thisNode.category == 'Operation' || thisNode.category == 'InternalOperation' || thisNode.category == 'System' || thisNode.category == 'Event')
             document.getElementById('detail-schema-tab').hidden = false;
         else
@@ -113,41 +116,26 @@ namespace Details
     function showAttributes(thisNode: data.nodeData)
     {
         _schemaDiagram.nodes.each(function (node: go.Node) { node.visible = false; });
-        var results = Util.getChildren(_schemaDiagram, thisNode, function (n: go.Node)
-        {
-            return (n.data as data.nodeData).category == 'Attribute';
-        });
-        
-        results.nodeResults.forEach(function (n: data.nodeData) { _schemaDiagram.findNodeForKey(n.key).visible = true });
+        _schemaDiagram.findNodeForKey(thisNode.key).visible = true;        
+        _schemaDiagram.nodes.each((n) => { if (n.data.group == thisNode.key) n.visible = true });
     }
 
     function updateModelFromSchema(baseDiagram: go.Diagram, rootNode: data.nodeData, updatedSchemaNodes: Array<data.nodeData>, updatedSchemaLinks: Array<data.linkData>)
     {
-        //console.log(schemaDiagram.nodes.count);
         _schemaDiagram.startTransaction();
-        //schemaDiagram.nodes.each(function (node: go.Node)
-        //{
-        //    var nodeData = node.data as data.nodeData;
-        //    if (nodeData.category == "Attribute")
-        //    {
-        //        schemaDiagram.model.removeNodeData(nodeData);
-        //    }
-        //});
-        var results = Util.getChildren(_schemaDiagram, rootNode, function (n: go.Node)
-        {
-            return (n.data as data.nodeData).category == 'Attribute';
-        });
+        var glm = _schemaDiagram.model as go.GraphLinksModel;
+        //var results = Util.getChildren(_schemaDiagram, rootNode, function (n: go.Node) { return (n.data as data.nodeData).category == 'Attribute'; });
+        var removeNodes = _schemaDiagram.model.nodeDataArray.filter((n: data.nodeData) => { return (n.group == rootNode.key) })
+        var removeLinks = glm.linkDataArray.filter((l: data.linkData) => { return (l.group == rootNode.key) });
 
-        _schemaDiagram.model.removeNodeDataCollection(results.nodeResults);
-        (_schemaDiagram.model as go.GraphLinksModel).removeLinkDataCollection(results.linkResults);
-
+        _schemaDiagram.model.removeNodeDataCollection(removeNodes);
+        glm.removeLinkDataCollection(removeLinks);
+        console.log(glm.linkDataArray);
 
         _schemaDiagram.model.addNodeDataCollection(updatedSchemaNodes);
         (_schemaDiagram.model as go.GraphLinksModel).addLinkDataCollection(updatedSchemaLinks);
         baseDiagram.nodes.each(function (node: go.Node) { if (node.category == "Attribute") node.visible = false; });
         _schemaDiagram.commitTransaction();
-
-        // console.log(schemaDiagram.nodes.count);
     }
 
     function initSchemaDiagram()
@@ -162,43 +150,34 @@ namespace Details
                 initialViewportSpot: go.Spot.Center
             });
 
-        _schemaDiagram.groupTemplate = gojs(
-            go.Group,
-            'Auto',
-            new go.Binding('position', 'xy', go.Point.parse).makeTwoWay(
-                go.Point.stringify
-            ),
-            {
-                deletable: false,
-                layout: gojs(go.TreeLayout, {
-                    alignment: go.TreeLayout.AlignmentStart,
-                    angle: 0,
-                    compaction: go.TreeLayout.CompactionNone,
-                    layerSpacing: 20,
-                    layerSpacingParentOverlap: 1,
-                    nodeIndentPastParent: 1.0,
-                    nodeSpacing: 1,
-                    setsPortSpot: false,
-                    setsChildPortSpot: false
-                })
-            },
-            gojs(go.Shape, { fill: 'white', stroke: 'lightgray' }),
-            gojs(
-                go.Panel,
-                'Vertical',
-                { defaultAlignment: go.Spot.Left },
-                gojs(
-                    go.TextBlock,
-                    {
-                        font: 'bold 12pt Segoe UI',
-                        margin: new go.Margin(5, 5, 0, 5),
-                        stroke: 'DodgerBlue'
-                    },
-                    new go.Binding('name')
-                ),
-                gojs(go.Placeholder, { padding: 5 })
-            )
-        );
+        _schemaDiagram.groupTemplate =
+            gojs(go.Group, "Auto",
+                new go.Binding("position", "xy", go.Point.parse).makeTwoWay(go.Point.stringify),
+                {
+                    deletable: false,
+                    layout:
+                        gojs(go.TreeLayout,
+                            {
+                                alignment: go.TreeLayout.AlignmentStart,
+                                angle: 0,
+                                compaction: go.TreeLayout.CompactionNone,
+                                layerSpacing: 16,
+                                layerSpacingParentOverlap: 1,
+                                nodeIndentPastParent: 1.0,
+                                nodeSpacing: 0,
+                                setsPortSpot: false,
+                                setsChildPortSpot: false
+                            })
+                },
+                gojs(go.Shape, { fill: "white", stroke: "lightgray" }),
+                gojs(go.Panel, "Vertical",
+                    { defaultAlignment: go.Spot.Left },
+                    gojs(go.TextBlock,
+                        { font: "bold 14pt sans-serif", margin: new go.Margin(5, 5, 0, 5) },
+                        new go.Binding("text")),
+                    gojs(go.Placeholder, { padding: 5 })
+                )
+            );
 
         _schemaDiagram.nodeTemplate = gojs(
             go.Node, //TreeNode            
@@ -246,11 +225,12 @@ namespace Details
     }
 
     declare var $RefParser: any;
-    var id: number = 1000;
+    var id:number;
 
     export function loadFromSchema(root: data.nodeData, done: (nodes: Array<data.nodeData>, links: Array<data.linkData>) => void)
     {
         var json = JSON.parse($('#detail-schema').val() as string) as JSON;
+        id = root.key * 10000;
 
         $RefParser.dereference(json)
             .then(function (schema)
@@ -274,7 +254,8 @@ namespace Details
             id++;
             var childdata = { key: id, name: item, category: "Attribute", group: group};
             nodeDataArray.push(childdata);
-            linkDataArray.push({ from: parentdata.key, to: childdata.key });
+            if(parentdata.key != group)
+                linkDataArray.push({ from: parentdata.key, to: childdata.key, group: group });
             //console.log(id + ' - ' + item + ' (' + schema.properties[item].type + ') P' + parentdata.key);
 
             if (schema.properties[item].properties)

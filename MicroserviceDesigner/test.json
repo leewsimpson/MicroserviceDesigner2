@@ -1,0 +1,41 @@
+{ "class": "go.GraphLinksModel",
+  "nodeDataArray": [ 
+{"category":"System", "name":"newSystem", "isGroup":true, "key":-1, "xy":"0 0", "detailLink":"", "description":"", "schema":"{\n    \"$schema\": \"http://json-schema.org/draft-06/schema#\",\n  \n    \"definitions\": {\n      \"address\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"street_address\": { \"type\": \"string\" },\n          \"city\":           { \"type\": \"string\" },\n          \"state\":          { \"type\": \"string\" }\n        },\n        \"required\": [\"street_address\", \"city\", \"state\"]\n      }\n    },\n  \n    \"type\": \"object\",\n  \n    \"properties\": {\n      \"billing_address\": { \"$ref\": \"#/definitions/address\" },\n      \"shipping_address\": { \"$ref\": \"#/definitions/address\" }\n    }\n  }"},
+{"key":-9999, "name":"billing_address", "category":"Attribute", "group":-1},
+{"key":-9998, "name":"street_address", "category":"Attribute", "group":-1},
+{"key":-9997, "name":"city", "category":"Attribute", "group":-1},
+{"key":-9996, "name":"state", "category":"Attribute", "group":-1},
+{"key":-9995, "name":"shipping_address", "category":"Attribute", "group":-1},
+{"key":-9994, "name":"street_address", "category":"Attribute", "group":-1},
+{"key":-9993, "name":"city", "category":"Attribute", "group":-1},
+{"key":-9992, "name":"state", "category":"Attribute", "group":-1},
+{"category":"System", "name":"ssss", "isGroup":true, "key":-10, "xy":"0 0", "detailLink":"", "description":"", "schema":"{\n    \"$schema\": \"http://json-schema.org/draft-06/schema#\",\n  \n    \"definitions\": {\n      \"address\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"street_address\": { \"type\": \"string\" },\n          \"city\":           { \"type\": \"string\" },\n          \"state\":          { \"type\": \"string\" }\n        },\n        \"required\": [\"street_address\", \"city\", \"state\"]\n      }\n    },\n  \n    \"type\": \"object\",\n  \n    \"properties\": {\n      \"xxxxbilling_address\": { \"$ref\": \"#/definitions/address\" },\n      \"xxxxshipping_address\": { \"$ref\": \"#/definitions/address\" }\n    }\n  }"},
+{"key":-99999, "name":"xxxxbilling_address", "category":"Attribute", "group":-10},
+    {
+      "key": -99998,
+      "name": "street_address",
+      "category": "Attribute",
+      "group": -10
+    },
+{"key":-99997, "name":"city", "category":"Attribute", "group":-10},
+{"key":-99996, "name":"state", "category":"Attribute", "group":-10},
+{"key":-99995, "name":"xxxxshipping_address", "category":"Attribute", "group":-10},
+{"key":-99994, "name":"street_address", "category":"Attribute", "group":-10},
+{"key":-99993, "name":"city", "category":"Attribute", "group":-10},
+{"key":-99992, "name":"state", "category":"Attribute", "group":-10}
+ ],
+  "linkDataArray": [ 
+{"from":-9999, "to":-9998, "group":-1},
+{"from":-9999, "to":-9997, "group":-1},
+{"from":-9999, "to":-9996, "group":-1},
+{"from":-9995, "to":-9994, "group":-1},
+{"from":-9995, "to":-9993, "group":-1},
+{"from":-9995, "to":-9992, "group":-1},
+{"from":-99999, "to":-99998, "group":-10},
+{"from":-99999, "to":-99997, "group":-10},
+{"from":-99999, "to":-99996, "group":-10},
+{"from":-99995, "to":-99994, "group":-10},
+{"from":-99995, "to":-99993, "group":-10},
+{"from":-99995, "to":-99992, "group":-10},
+{"from":-1, "to":-10}
+ ]}
