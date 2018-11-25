@@ -1,6 +1,4 @@
-﻿
-
-namespace Template
+﻿namespace Template
 {
     export function link()
     {
@@ -17,7 +15,7 @@ namespace Template
                     var from = e.diagram.model.findNodeDataForKey(obj.part.data.from);
                     var to = e.diagram.model.findNodeDataForKey(obj.part.data.to);
                     $('#mapper').show();
-                    mapper.showMapper(myDiagram, from, to, function () { console.log('mapped'); });
+                    mapper.showMapper(from, to, function () { Main.hideOtherNodes() });
                 },
                 contextMenu: gojs(go.Adornment, "Vertical",
                     gojs("ContextMenuButton", gojs(go.TextBlock, "Mapping"), {
@@ -26,7 +24,7 @@ namespace Template
                             var from = e.diagram.model.findNodeDataForKey(obj.part.data.from);
                             var to = e.diagram.model.findNodeDataForKey(obj.part.data.to);
                             $('#mapper').show();
-                            mapper.showMapper(myDiagram, from, to, function () { console.log('mapped'); });
+                            mapper.showMapper(from, to, function () { Main.hideOtherNodes() });
                         }
                     })
                 )

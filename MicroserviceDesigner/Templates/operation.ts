@@ -1,12 +1,10 @@
-﻿
-
-namespace Template
+﻿namespace Template
 {
     export function operation()
     {
         var gojs = go.GraphObject.make;
 
-        return gojs(go.Node, "Vertical",
+        return gojs(go.Group, "Vertical",
             {
                 alignment: go.Spot.Center
             },

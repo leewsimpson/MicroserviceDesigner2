@@ -1,8 +1,5 @@
-﻿
-
-namespace Template
+﻿namespace Template
 {
-
     export function domain()
     {
         var gojs = go.GraphObject.make;

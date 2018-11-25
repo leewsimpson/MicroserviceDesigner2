@@ -1,9 +1,9 @@
-
 namespace Details
 {
-    var _schemaDiagram: go.Diagram;
-    var _baseDiagram: go.Diagram;
-    var _thisNode: data.nodeData;
+    var _requestSchemaDiagram: go.Diagram;
+    var _responseSchemaDiagram: go.Diagram;
+    var _requestNode: data.nodeData;
+    var _responseNode: data.nodeData;
 
     export class Detail
     {
@@ -18,9 +18,6 @@ namespace Details
 
     export function init()
     {
-        initSchemaDiagram();
-        _schemaDiagram.model = new go.GraphLinksModel();
-
         $('#detail-btn-ok').on('click', function ()
         {
             var type = $('#detail-type').val() as string;
@@ -46,7 +43,7 @@ namespace Details
             $('#detailModal').modal('hide');
             $('a[data-toggle="tab"]:first').tab('show');
 
-            callback(d, _schemaDiagram.model.nodeDataArray as Array<data.nodeData>, (_schemaDiagram.model as go.GraphLinksModel).linkDataArray as Array<data.linkData>);
+            callback(d, _requestSchemaDiagram.model.nodeDataArray as Array<data.nodeData>, (_requestSchemaDiagram.model as go.GraphLinksModel).linkDataArray as Array<data.linkData>);
         });
 
         $('#detail-btn-cancel').on('click', function ()
@@ -55,25 +52,56 @@ namespace Details
             $('#detailModal').modal('hide');
         });
 
-        $('#detail-fromSchema').click(function ()
-        {
-            Details.loadFromSchema(_thisNode, function (newNodes, newLinks)
-            {
-                updateModelFromSchema(_baseDiagram, _thisNode, newNodes, newLinks);
-            });
-        });
+        $('#detail-fromSchema-request').click(() => Details.loadFromSchema(_requestNode, '#detail-schema-request', (newNodes, newLinks) => updateModelFromSchema(_requestSchemaDiagram, _requestNode, newNodes, newLinks)));
+        $('#detail-fromSchema-response').click(() => Details.loadFromSchema(_responseNode, '#detail-schema-response', (newNodes, newLinks) => updateModelFromSchema(_responseSchemaDiagram, _responseNode, newNodes, newLinks)));
 
-        $('#detail-schema-tab').click(function ()
-        {
-            _schemaDiagram.model = _baseDiagram.model;
-            showAttributes(_thisNode);
-        });
+        $('#request-tab').on('shown.bs.tab', () => showOnlyThisNode(_requestSchemaDiagram, _requestNode));
+        $('#response-tab').on('shown.bs.tab', () => showOnlyThisNode(_responseSchemaDiagram, _responseNode));
+
+        _requestSchemaDiagram = initSchemaDiagram('requestSchemaDiagramDiv');
+        _responseSchemaDiagram = initSchemaDiagram('responseSchemaDiagramDiv');
     }
 
-    export function showDetails(baseDiagram: go.Diagram, thisNode: data.nodeData, cb: (detail: Detail) => void)
+    export function showDetails(thisNode: data.nodeData, cb: (detail: Detail) => void)
     {
-        _baseDiagram = baseDiagram;
-        _thisNode = thisNode;
+        _requestSchemaDiagram.model = Main._diagram.model;
+        _responseSchemaDiagram.model = Main._diagram.model;
+
+        var req = _requestSchemaDiagram.nodes.filter((n) => { var data = n.data as data.nodeData; return (data.name == 'Request' && data.group == thisNode.key) }).first();
+        var res = _responseSchemaDiagram.nodes.filter((n) => { var data = n.data as data.nodeData; return (data.name == 'Response' && data.group == thisNode.key) }).first();
+
+        if (req == null)
+        {
+            _requestNode =
+                {
+                    name: 'Request',
+                    group: thisNode.key,
+                    category: 'RR',
+                    isGroup: true
+                }
+            _requestSchemaDiagram.model.addNodeData(_requestNode);
+        }
+        else
+        {
+            _requestNode = req.data;
+        }
+
+        if (res == null)
+        {
+            _responseNode =
+                {
+                    name: 'Response',
+                    group: thisNode.key,
+                    category: 'RR',
+                    isGroup: true
+                }
+            _requestSchemaDiagram.model.addNodeData(_responseNode);
+        }
+        else
+        {
+            _responseNode = res.data;
+        }
+        Main.hideOtherNodes();
 
         if (thisNode.category == 'Operation' || thisNode.category == 'InternalOperation')
             $('#detail-internal-div').show()
@@ -108,41 +136,50 @@ namespace Details
         else
             $('#detail-url').val("");
 
-   
+
         callback = cb;
         $('#detailModal').modal();
     }
 
-    function showAttributes(thisNode: data.nodeData)
+    function showOnlyThisNode(diagram: go.Diagram, thisNode: data.nodeData)
     {
-        _schemaDiagram.nodes.each(function (node: go.Node) { node.visible = false; });
-        _schemaDiagram.findNodeForKey(thisNode.key).visible = true;        
-        _schemaDiagram.nodes.each((n) => { if (n.data.group == thisNode.key) n.visible = true });
+        diagram.nodes.each(function (node: go.Node) { node.visible = false; });
+        diagram.findNodeForKey(thisNode.key).visible = true;
+        Util.showAllParents(diagram, thisNode)
+
+        //var p1 = diagram.findNodeForKey(thisNode.group);
+        //p1.visible = true;
+
+        //var p2 = diagram.findNodeForKey(p1.data.group);
+        //if (p2) p2.visible = true;
+
+        diagram.nodes.each((n) => { if (n.data.group == thisNode.key) n.visible = true });
     }
 
-    function updateModelFromSchema(baseDiagram: go.Diagram, rootNode: data.nodeData, updatedSchemaNodes: Array<data.nodeData>, updatedSchemaLinks: Array<data.linkData>)
+    function updateModelFromSchema(diagram: go.Diagram, rootNode: data.nodeData, updatedSchemaNodes: Array<data.nodeData>, updatedSchemaLinks: Array<data.linkData>)
     {
-        _schemaDiagram.startTransaction();
-        var glm = _schemaDiagram.model as go.GraphLinksModel;
-        //var results = Util.getChildren(_schemaDiagram, rootNode, function (n: go.Node) { return (n.data as data.nodeData).category == 'Attribute'; });
-        var removeNodes = _schemaDiagram.model.nodeDataArray.filter((n: data.nodeData) => { return (n.group == rootNode.key) })
+        _requestSchemaDiagram.startTransaction();
+        var glm = _requestSchemaDiagram.model as go.GraphLinksModel;
+
+        var removeNodes = _requestSchemaDiagram.model.nodeDataArray.filter((n: data.nodeData) => { return (n.group == rootNode.key) })
         var removeLinks = glm.linkDataArray.filter((l: data.linkData) => { return (l.group == rootNode.key) });
 
-        _schemaDiagram.model.removeNodeDataCollection(removeNodes);
+        _requestSchemaDiagram.model.removeNodeDataCollection(removeNodes);
         glm.removeLinkDataCollection(removeLinks);
-        console.log(glm.linkDataArray);
 
-        _schemaDiagram.model.addNodeDataCollection(updatedSchemaNodes);
-        (_schemaDiagram.model as go.GraphLinksModel).addLinkDataCollection(updatedSchemaLinks);
-        baseDiagram.nodes.each(function (node: go.Node) { if (node.category == "Attribute") node.visible = false; });
-        _schemaDiagram.commitTransaction();
+        _requestSchemaDiagram.model.addNodeDataCollection(updatedSchemaNodes);
+        (_requestSchemaDiagram.model as go.GraphLinksModel).addLinkDataCollection(updatedSchemaLinks);
+        _requestSchemaDiagram.nodes.each(function (node: go.Node) { if (node.category == "Attribute") node.visible = false; });
+        _requestSchemaDiagram.commitTransaction();
+        showOnlyThisNode(diagram, rootNode);
+        Main.hideOtherNodes();
     }
 
-    function initSchemaDiagram()
+    function initSchemaDiagram(divName: string)
     {
         var gojs = go.GraphObject.make;
 
-        _schemaDiagram = gojs(go.Diagram, 'schemaDiagramDiv',
+        var diagram = gojs(go.Diagram, divName,
             {
                 layout: gojs(go.TreeLayout, { nodeSpacing: 5 }),
                 contentAlignment: go.Spot.Center,
@@ -150,9 +187,8 @@ namespace Details
                 initialViewportSpot: go.Spot.Center
             });
 
-        _schemaDiagram.groupTemplate =
+        diagram.groupTemplate =
             gojs(go.Group, "Auto",
-                new go.Binding("position", "xy", go.Point.parse).makeTwoWay(go.Point.stringify),
                 {
                     deletable: false,
                     layout:
@@ -169,17 +205,17 @@ namespace Details
                                 setsChildPortSpot: false
                             })
                 },
-                gojs(go.Shape, { fill: "white", stroke: "lightgray" }),
+                //gojs(go.Shape, { fill: "white", stroke: "lightgray" }),
                 gojs(go.Panel, "Vertical",
                     { defaultAlignment: go.Spot.Left },
-                    gojs(go.TextBlock,
-                        { font: "bold 14pt sans-serif", margin: new go.Margin(5, 5, 0, 5) },
-                        new go.Binding("text")),
+                    //gojs(go.TextBlock,
+                    //    { font: "bold 14pt sans-serif", margin: new go.Margin(5, 5, 0, 5) },
+                    //    new go.Binding("text", "name")),
                     gojs(go.Placeholder, { padding: 5 })
                 )
             );
 
-        _schemaDiagram.nodeTemplate = gojs(
+        diagram.nodeTemplate = gojs(
             go.Node, //TreeNode            
             { movable: false }, // user cannot move an individual node
             { selectionAdorned: false },
@@ -210,7 +246,7 @@ namespace Details
         );
 
         // These are the links connecting tree nodes within each group.
-        _schemaDiagram.linkTemplate = gojs(
+        diagram.linkTemplate = gojs(
             go.Link,
             {
                 selectable: false,
@@ -222,18 +258,20 @@ namespace Details
             },
             gojs(go.Shape, { stroke: 'lightgray' })
         );
+
+        return diagram;
     }
 
     declare var $RefParser: any;
-    var id:number;
+    var id: number;
 
-    export function loadFromSchema(root: data.nodeData, done: (nodes: Array<data.nodeData>, links: Array<data.linkData>) => void)
+    export function loadFromSchema(root: data.nodeData, textId: string, done: (nodes: Array<data.nodeData>, links: Array<data.linkData>) => void)
     {
-        var json = JSON.parse($('#detail-schema').val() as string) as JSON;
+        var json = JSON.parse($(textId).val() as string) as JSON;
         id = root.key * 10000;
 
         $RefParser.dereference(json)
-            .then(function (schema)
+            .then(function (schema: any)
             {
                 var nodeDataArray: Array<data.nodeData> = new Array<data.nodeData>();
                 var linkDataArray: Array<data.linkData> = new Array<data.linkData>();
@@ -241,20 +279,20 @@ namespace Details
 
                 done(nodeDataArray, linkDataArray);
             })
-            .catch(function (err)
+            .catch(function (err: any)
             {
                 console.error(err);
             });
     }
 
-    function recurse(group: number, schema: any, nodeDataArray, linkDataArray, parentdata: data.nodeData)
+    function recurse(group: number, schema: any, nodeDataArray: data.nodeData[], linkDataArray: data.linkData[], parentdata: data.nodeData)
     {
         for (var item in schema.properties)
         {
             id++;
-            var childdata = { key: id, name: item, category: "Attribute", group: group};
+            var childdata = { key: id, name: item, group: group };  //category: "Attribute"
             nodeDataArray.push(childdata);
-            if(parentdata.key != group)
+            if (parentdata.key != group)
                 linkDataArray.push({ from: parentdata.key, to: childdata.key, group: group });
             //console.log(id + ' - ' + item + ' (' + schema.properties[item].type + ') P' + parentdata.key);
 

@@ -39,7 +39,8 @@ namespace Template
                                 {
                                     category: "Operation",
                                     group: obj.part.data.key,
-                                    name: "newOperation"
+                                    name: "newOperation",
+                                    isGroup: true
                                 };
                                 diagram.model.addNodeData(data);
                                 var part = diagram.findPartForData(data);

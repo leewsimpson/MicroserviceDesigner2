@@ -1,15 +1,14 @@
 var Details;
 (function (Details) {
-    var _schemaDiagram;
-    var _baseDiagram;
-    var _thisNode;
+    var _requestSchemaDiagram;
+    var _responseSchemaDiagram;
+    var _requestNode;
+    var _responseNode;
     class Detail {
     }
     Details.Detail = Detail;
     var callback;
     function init() {
-        initSchemaDiagram();
-        _schemaDiagram.model = new go.GraphLinksModel();
         $('#detail-btn-ok').on('click', function () {
             var type = $('#detail-type').val();
             var internalChecked = document.getElementById('detail-internal').checked;
@@ -28,26 +27,52 @@ var Details;
             }
             $('#detailModal').modal('hide');
             $('a[data-toggle="tab"]:first').tab('show');
-            callback(d, _schemaDiagram.model.nodeDataArray, _schemaDiagram.model.linkDataArray);
+            callback(d, _requestSchemaDiagram.model.nodeDataArray, _requestSchemaDiagram.model.linkDataArray);
         });
         $('#detail-btn-cancel').on('click', function () {
             $('a[data-toggle="tab"]:first').tab('show');
             $('#detailModal').modal('hide');
         });
-        $('#detail-fromSchema').click(function () {
-            Details.loadFromSchema(_thisNode, function (newNodes, newLinks) {
-                updateModelFromSchema(_baseDiagram, _thisNode, newNodes, newLinks);
-            });
-        });
-        $('#detail-schema-tab').click(function () {
-            _schemaDiagram.model = _baseDiagram.model;
-            showAttributes(_thisNode);
-        });
+        $('#detail-fromSchema-request').click(() => Details.loadFromSchema(_requestNode, '#detail-schema-request', (newNodes, newLinks) => updateModelFromSchema(_requestSchemaDiagram, _requestNode, newNodes, newLinks)));
+        $('#detail-fromSchema-response').click(() => Details.loadFromSchema(_responseNode, '#detail-schema-response', (newNodes, newLinks) => updateModelFromSchema(_responseSchemaDiagram, _responseNode, newNodes, newLinks)));
+        $('#request-tab').on('shown.bs.tab', () => showOnlyThisNode(_requestSchemaDiagram, _requestNode));
+        $('#response-tab').on('shown.bs.tab', () => showOnlyThisNode(_responseSchemaDiagram, _responseNode));
+        _requestSchemaDiagram = initSchemaDiagram('requestSchemaDiagramDiv');
+        _responseSchemaDiagram = initSchemaDiagram('responseSchemaDiagramDiv');
     }
     Details.init = init;
-    function showDetails(baseDiagram, thisNode, cb) {
-        _baseDiagram = baseDiagram;
-        _thisNode = thisNode;
+    function showDetails(thisNode, cb) {
+        _requestSchemaDiagram.model = Main._diagram.model;
+        _responseSchemaDiagram.model = Main._diagram.model;
+        var req = _requestSchemaDiagram.nodes.filter((n) => { var data = n.data; return (data.name == 'Request' && data.group == thisNode.key); }).first();
+        var res = _responseSchemaDiagram.nodes.filter((n) => { var data = n.data; return (data.name == 'Response' && data.group == thisNode.key); }).first();
+        if (req == null) {
+            _requestNode =
+                {
+                    name: 'Request',
+                    group: thisNode.key,
+                    category: 'RR',
+                    isGroup: true
+                };
+            _requestSchemaDiagram.model.addNodeData(_requestNode);
+        }
+        else {
+            _requestNode = req.data;
+        }
+        if (res == null) {
+            _responseNode =
+                {
+                    name: 'Response',
+                    group: thisNode.key,
+                    category: 'RR',
+                    isGroup: true
+                };
+            _requestSchemaDiagram.model.addNodeData(_responseNode);
+        }
+        else {
+            _responseNode = res.data;
+        }
+        Main.hideOtherNodes();
         if (thisNode.category == 'Operation' || thisNode.category == 'InternalOperation')
             $('#detail-internal-div').show();
         else
@@ -76,36 +101,38 @@ var Details;
         $('#detailModal').modal();
     }
     Details.showDetails = showDetails;
-    function showAttributes(thisNode) {
-        _schemaDiagram.nodes.each(function (node) { node.visible = false; });
-        _schemaDiagram.findNodeForKey(thisNode.key).visible = true;
-        _schemaDiagram.nodes.each((n) => { if (n.data.group == thisNode.key)
+    function showOnlyThisNode(diagram, thisNode) {
+        diagram.nodes.each(function (node) { node.visible = false; });
+        diagram.findNodeForKey(thisNode.key).visible = true;
+        Util.showAllParents(diagram, thisNode);
+        diagram.nodes.each((n) => { if (n.data.group == thisNode.key)
             n.visible = true; });
     }
-    function updateModelFromSchema(baseDiagram, rootNode, updatedSchemaNodes, updatedSchemaLinks) {
-        _schemaDiagram.startTransaction();
-        var glm = _schemaDiagram.model;
-        var removeNodes = _schemaDiagram.model.nodeDataArray.filter((n) => { return (n.group == rootNode.key); });
+    function updateModelFromSchema(diagram, rootNode, updatedSchemaNodes, updatedSchemaLinks) {
+        _requestSchemaDiagram.startTransaction();
+        var glm = _requestSchemaDiagram.model;
+        var removeNodes = _requestSchemaDiagram.model.nodeDataArray.filter((n) => { return (n.group == rootNode.key); });
         var removeLinks = glm.linkDataArray.filter((l) => { return (l.group == rootNode.key); });
-        _schemaDiagram.model.removeNodeDataCollection(removeNodes);
+        _requestSchemaDiagram.model.removeNodeDataCollection(removeNodes);
         glm.removeLinkDataCollection(removeLinks);
-        console.log(glm.linkDataArray);
-        _schemaDiagram.model.addNodeDataCollection(updatedSchemaNodes);
-        _schemaDiagram.model.addLinkDataCollection(updatedSchemaLinks);
-        baseDiagram.nodes.each(function (node) { if (node.category == "Attribute")
+        _requestSchemaDiagram.model.addNodeDataCollection(updatedSchemaNodes);
+        _requestSchemaDiagram.model.addLinkDataCollection(updatedSchemaLinks);
+        _requestSchemaDiagram.nodes.each(function (node) { if (node.category == "Attribute")
             node.visible = false; });
-        _schemaDiagram.commitTransaction();
+        _requestSchemaDiagram.commitTransaction();
+        showOnlyThisNode(diagram, rootNode);
+        Main.hideOtherNodes();
     }
-    function initSchemaDiagram() {
+    function initSchemaDiagram(divName) {
         var gojs = go.GraphObject.make;
-        _schemaDiagram = gojs(go.Diagram, 'schemaDiagramDiv', {
+        var diagram = gojs(go.Diagram, divName, {
             layout: gojs(go.TreeLayout, { nodeSpacing: 5 }),
             contentAlignment: go.Spot.Center,
             initialDocumentSpot: go.Spot.Center,
             initialViewportSpot: go.Spot.Center
         });
-        _schemaDiagram.groupTemplate =
-            gojs(go.Group, "Auto", new go.Binding("position", "xy", go.Point.parse).makeTwoWay(go.Point.stringify), {
+        diagram.groupTemplate =
+            gojs(go.Group, "Auto", {
                 deletable: false,
                 layout: gojs(go.TreeLayout, {
                     alignment: go.TreeLayout.AlignmentStart,
@@ -118,8 +145,8 @@ var Details;
                     setsPortSpot: false,
                     setsChildPortSpot: false
                 })
-            }, gojs(go.Shape, { fill: "white", stroke: "lightgray" }), gojs(go.Panel, "Vertical", { defaultAlignment: go.Spot.Left }, gojs(go.TextBlock, { font: "bold 14pt sans-serif", margin: new go.Margin(5, 5, 0, 5) }, new go.Binding("text")), gojs(go.Placeholder, { padding: 5 })));
-        _schemaDiagram.nodeTemplate = gojs(go.Node, { movable: false }, { selectionAdorned: false }, gojs('TreeExpanderButton', {
+            }, gojs(go.Panel, "Vertical", { defaultAlignment: go.Spot.Left }, gojs(go.Placeholder, { padding: 5 })));
+        diagram.nodeTemplate = gojs(go.Node, { movable: false }, { selectionAdorned: false }, gojs('TreeExpanderButton', {
             width: 14,
             height: 14,
             'ButtonIcon.stroke': 'white',
@@ -131,7 +158,7 @@ var Details;
             _buttonStrokeOver: null,
             _buttonFillPressed: null
         }), gojs(go.Panel, 'Horizontal', { position: new go.Point(16, 0), alignment: go.Spot.Center }, gojs(go.TextBlock, new go.Binding('text', 'name'))));
-        _schemaDiagram.linkTemplate = gojs(go.Link, {
+        diagram.linkTemplate = gojs(go.Link, {
             selectable: false,
             routing: go.Link.Orthogonal,
             fromEndSegmentLength: 4,
@@ -139,10 +166,11 @@ var Details;
             fromSpot: new go.Spot(0.001, 1, 7, 0),
             toSpot: go.Spot.Left
         }, gojs(go.Shape, { stroke: 'lightgray' }));
+        return diagram;
     }
     var id;
-    function loadFromSchema(root, done) {
-        var json = JSON.parse($('#detail-schema').val());
+    function loadFromSchema(root, textId, done) {
+        var json = JSON.parse($(textId).val());
         id = root.key * 10000;
         $RefParser.dereference(json)
             .then(function (schema) {
@@ -159,7 +187,7 @@ var Details;
     function recurse(group, schema, nodeDataArray, linkDataArray, parentdata) {
         for (var item in schema.properties) {
             id++;
-            var childdata = { key: id, name: item, category: "Attribute", group: group };
+            var childdata = { key: id, name: item, group: group };
             nodeDataArray.push(childdata);
             if (parentdata.key != group)
                 linkDataArray.push({ from: parentdata.key, to: childdata.key, group: group });
@@ -177,273 +205,279 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var myDiagram;
-var dataString;
-var project;
-var debugMode;
-function unsavedChanges(value) {
-    if (value) {
-        $("#unsavedChanges").show();
+var Main;
+(function (Main) {
+    var _dataString;
+    var _projectName;
+    var _isDebugMode;
+    function unsavedChanges(value) {
+        if (value) {
+            $("#unsavedChanges").show();
+        }
+        else {
+            $("#unsavedChanges").hide();
+        }
     }
-    else {
-        $("#unsavedChanges").hide();
-    }
-}
-function confirmModal(callback) {
-    $('#modal-btn-si').on('click', function () {
-        callback(true);
-        $('#confirmModal').modal('hide');
-    });
-    $('#modal-btn-no').on('click', function () {
-        callback(false);
-        $('#confirmModal').modal('hide');
-    });
-}
-;
-function init() {
-    return __awaiter(this, void 0, void 0, function* () {
-        const urlParams = new URLSearchParams(window.location.search);
-        project = urlParams.get('project');
-        if (urlParams.get('debugMode'))
-            debugMode = true;
-        Details.init();
-        load();
-        var gojs = go.GraphObject.make;
-        myDiagram = gojs(go.Diagram, "myDiagramDiv", {
-            "toolManager.hoverDelay": 500,
-            LayoutCompleted: function () {
-            },
-            contentAlignment: go.Spot.Center,
-            "undoManager.isEnabled": true,
-            "draggingTool.isGridSnapEnabled": true,
-            allowDrop: true,
-            mouseDrop: function (e) {
-                if (e.diagram.selection.first().category == "Operation")
-                    e.diagram.currentTool.doCancel();
-            },
-            layout: Util.getcurrentLayout()
-        });
-        myDiagram.addModelChangedListener(function (evt) {
-            if (evt.isTransactionFinished) {
-                var latestData = myDiagram.model.toJson();
-                if (dataString != latestData) {
-                    dataString = latestData;
-                    unsavedChanges(true);
+    function init() {
+        return __awaiter(this, void 0, void 0, function* () {
+            const urlParams = new URLSearchParams(window.location.search);
+            _projectName = urlParams.get('project');
+            if (urlParams.get('debugMode'))
+                _isDebugMode = true;
+            load();
+            var gojs = go.GraphObject.make;
+            Main._diagram = gojs(go.Diagram, "myDiagramDiv", {
+                "toolManager.hoverDelay": 500,
+                LayoutCompleted: function () {
+                },
+                contentAlignment: go.Spot.Center,
+                "undoManager.isEnabled": true,
+                "draggingTool.isGridSnapEnabled": true,
+                allowDrop: true,
+                mouseDrop: function (e) {
+                    if (e.diagram.selection.first().category == "Operation")
+                        e.diagram.currentTool.doCancel();
+                },
+                layout: Util.getcurrentLayout()
+            });
+            Main._diagram.addModelChangedListener(function (evt) {
+                if (evt.isTransactionFinished) {
+                    var latestData = Main._diagram.model.toJson();
+                    if (_dataString != latestData) {
+                        _dataString = latestData;
+                        unsavedChanges(true);
+                    }
+                    loadAPIs(_dataString);
+                    loadSystems(_dataString);
+                    loadEvents(_dataString);
+                    updateDebug(_dataString);
+                    bindMenu();
                 }
-                loadAPIs(dataString);
-                loadSystems(dataString);
-                loadEvents(dataString);
-                updateDebug(dataString);
-                bindMenu();
-            }
+            });
+            Main._diagram.contextMenu = gojs(go.Adornment, "Vertical", gojs("ContextMenuButton", gojs(go.TextBlock, "New API"), {
+                click: function (e, obj) {
+                    var diagram = e.diagram;
+                    diagram.startTransaction('new API');
+                    var data = {
+                        category: "API",
+                        isGroup: true,
+                        name: "newAPI"
+                    };
+                    diagram.model.addNodeData(data);
+                    var part = diagram.findPartForData(data);
+                    part.location = diagram.toolManager.contextMenuTool.mouseDownPoint;
+                    diagram.commitTransaction('new API');
+                    var txt = part.findObject("name");
+                    diagram.commandHandler.editTextBlock(txt);
+                }
+            }), gojs("ContextMenuButton", gojs(go.TextBlock, "New Domain"), {
+                click: function (e, obj) {
+                    var diagram = e.diagram;
+                    diagram.startTransaction('new Domain');
+                    var data = {
+                        category: "Domain",
+                        isGroup: true,
+                        name: "newDomain"
+                    };
+                    diagram.model.addNodeData(data);
+                    var part = diagram.findPartForData(data);
+                    part.location = diagram.toolManager.contextMenuTool.mouseDownPoint;
+                    diagram.commitTransaction('new Domain');
+                    var txt = part.findObject("name");
+                    diagram.commandHandler.editTextBlock(txt);
+                }
+            }), gojs("ContextMenuButton", gojs(go.TextBlock, "New Event"), {
+                click: function (e, obj) {
+                    var diagram = e.diagram;
+                    diagram.startTransaction('new event');
+                    var data = {
+                        category: "Event",
+                        name: "newEvent",
+                        isGroup: true,
+                    };
+                    diagram.model.addNodeData(data);
+                    var part = diagram.findPartForData(data);
+                    part.location = diagram.toolManager.contextMenuTool.mouseDownPoint;
+                    diagram.commitTransaction('new event');
+                    var txt = part.findObject("name");
+                    diagram.commandHandler.editTextBlock(txt);
+                }
+            }), gojs("ContextMenuButton", gojs(go.TextBlock, "New System"), {
+                click: function (e, obj) {
+                    var diagram = e.diagram;
+                    diagram.startTransaction('new system');
+                    var data = {
+                        category: "System",
+                        name: "newSystem",
+                        isGroup: true,
+                    };
+                    diagram.model.addNodeData(data);
+                    var part = diagram.findPartForData(data);
+                    part.location = diagram.toolManager.contextMenuTool.mouseDownPoint;
+                    diagram.commitTransaction('new system');
+                    var txt = part.findObject("name");
+                    diagram.commandHandler.editTextBlock(txt);
+                }
+            }));
+            Main._diagram.groupTemplateMap.add("API", Template.api());
+            Main._diagram.groupTemplateMap.add("Operation", Template.operation());
+            Main._diagram.groupTemplateMap.add("InternalOperation", Template.internalOperation());
+            Main._diagram.groupTemplateMap.add("Event", Template.event());
+            Main._diagram.groupTemplateMap.add("Domain", Template.domain());
+            Main._diagram.groupTemplateMap.add("System", Template.system());
+            Main._diagram.linkTemplateMap.add("", Template.link());
+            Main._diagram.model = new go.GraphLinksModel();
+            mapper.init();
+            Details.init();
         });
-        myDiagram.contextMenu = gojs(go.Adornment, "Vertical", gojs("ContextMenuButton", gojs(go.TextBlock, "New API"), {
-            click: function (e, obj) {
-                var diagram = e.diagram;
-                diagram.startTransaction('new API');
-                var data = {
-                    category: "API",
-                    isGroup: true,
-                    name: "newAPI"
-                };
-                diagram.model.addNodeData(data);
-                var part = diagram.findPartForData(data);
-                part.location = diagram.toolManager.contextMenuTool.mouseDownPoint;
-                diagram.commitTransaction('new API');
-                var txt = part.findObject("name");
-                diagram.commandHandler.editTextBlock(txt);
-            }
-        }), gojs("ContextMenuButton", gojs(go.TextBlock, "New Domain"), {
-            click: function (e, obj) {
-                var diagram = e.diagram;
-                diagram.startTransaction('new Domain');
-                var data = {
-                    category: "Domain",
-                    isGroup: true,
-                    name: "newDomain"
-                };
-                diagram.model.addNodeData(data);
-                var part = diagram.findPartForData(data);
-                part.location = diagram.toolManager.contextMenuTool.mouseDownPoint;
-                diagram.commitTransaction('new Domain');
-                var txt = part.findObject("name");
-                diagram.commandHandler.editTextBlock(txt);
-            }
-        }), gojs("ContextMenuButton", gojs(go.TextBlock, "New Event"), {
-            click: function (e, obj) {
-                var diagram = e.diagram;
-                diagram.startTransaction('new event');
-                var data = {
-                    category: "Event",
-                    name: "newEvent"
-                };
-                diagram.model.addNodeData(data);
-                var part = diagram.findPartForData(data);
-                part.location = diagram.toolManager.contextMenuTool.mouseDownPoint;
-                diagram.commitTransaction('new event');
-                var txt = part.findObject("name");
-                diagram.commandHandler.editTextBlock(txt);
-            }
-        }), gojs("ContextMenuButton", gojs(go.TextBlock, "New System"), {
-            click: function (e, obj) {
-                var diagram = e.diagram;
-                diagram.startTransaction('new system');
-                var data = {
-                    category: "System",
-                    name: "newSystem",
-                    isGroup: true,
-                };
-                diagram.model.addNodeData(data);
-                var part = diagram.findPartForData(data);
-                part.location = diagram.toolManager.contextMenuTool.mouseDownPoint;
-                diagram.commitTransaction('new system');
-                var txt = part.findObject("name");
-                diagram.commandHandler.editTextBlock(txt);
-            }
-        }));
-        myDiagram.groupTemplateMap.add("API", Template.api());
-        myDiagram.nodeTemplateMap.add("Operation", Template.operation());
-        myDiagram.nodeTemplateMap.add("InternalOperation", Template.internalOperation());
-        myDiagram.nodeTemplateMap.add("Event", Template.event());
-        myDiagram.groupTemplateMap.add("Domain", Template.domain());
-        myDiagram.groupTemplateMap.add("System", Template.system());
-        myDiagram.linkTemplateMap.add("", Template.link());
-        mapper.init();
-    });
-}
-;
-function getCategory(dataString, category) {
-    var data = JSON.parse(dataString);
-    data.nodeDataArray = data.nodeDataArray.filter(function (node) {
-        return node.category == category;
-    });
-    return data;
-}
-;
-function includeNode(key) {
-    if (myDiagram) {
-        var fullNode = myDiagram.findNodeForKey(key);
-        myDiagram.startTransaction();
-        myDiagram.nodes.each(function (node) {
-            if (node.data.key == key || (fullNode.containingGroup != null && node.data.key == fullNode.containingGroup.data.key)) {
+    }
+    Main.init = init;
+    ;
+    function getCategory(dataString, category) {
+        var data = JSON.parse(dataString);
+        data.nodeDataArray = data.nodeDataArray.filter(function (node) {
+            return node.category == category;
+        });
+        return data;
+    }
+    ;
+    function includeNode(key) {
+        if (Main._diagram) {
+            var fullNode = Main._diagram.findNodeForKey(key);
+            Main._diagram.startTransaction();
+            Main._diagram.nodes.each(function (node) {
+                if (node.data.key == key || (fullNode.containingGroup != null && node.data.key == fullNode.containingGroup.data.key)) {
+                    node.visible = true;
+                }
+            });
+            Main._diagram.layout = Util.getcurrentLayout();
+            ;
+            Main._diagram.commitTransaction();
+        }
+    }
+    function includeAPI(key) {
+        Main._diagram.startTransaction();
+        Main._diagram.nodes.each(function (node) {
+            if (node.data.key == key || node.data.group == key) {
                 node.visible = true;
             }
         });
-        myDiagram.layout = Util.getcurrentLayout();
-        ;
-        myDiagram.commitTransaction();
+        Main._diagram.layout = Util.getcurrentLayout();
+        Main._diagram.commitTransaction();
     }
-}
-function includeAPI(key) {
-    myDiagram.startTransaction();
-    myDiagram.nodes.each(function (node) {
-        if (node.data.key == key || node.data.group == key) {
-            node.visible = true;
-        }
-    });
-    myDiagram.layout = Util.getcurrentLayout();
-    myDiagram.commitTransaction();
-}
-function getInnerNodes(dataString, key) {
-    var data = JSON.parse(dataString).nodeDataArray.filter(function (node) {
-        return node.group == key;
-    });
-    return data;
-}
-;
-function createMenuItem(dataString, node) {
-    var a = $("<a class='dropdown-item' href='#' id='navbarDropdown' role='button' data-toggle='dropdown' aria-haspopup='true' aria-expanded='false'>" + node.name + "</a>").on("click", function () { includeNode(node.key); });
-    return a;
-}
-function createOperationHTML(dataString, node) {
-    var listItem = $("<li class='dropdown-submenu'/>");
-    var a = $("<a class='dropdown-item dropdown-toggle' href='#' id='navbarDropdown' role='button' data-toggle='dropdown' aria-haspopup='true' aria-expanded='false'>" + node.name + "</a>").on("click", function () { includeAPI(node.key); });
-    var ul = $("<ul class='dropdown-menu' aria-labelledby='navbarDropdown'/>");
-    getInnerNodes(dataString, node.key).forEach(function (operationNode) {
-        var li = $("<li/>");
-        var ia = $("<a class='dropdown-item' href='#'>" + operationNode.name + "</a>").on("click", function () { includeNode(operationNode.key); });
-        li.append(ia);
-        ul.append(li);
-    });
-    listItem.append(a);
-    listItem.append(ul);
-    return listItem;
-}
-function loadAPIs(dataString) {
-    var divList = $("#APIList");
-    divList.empty();
-    var list = getCategory(dataString, "API").nodeDataArray;
-    list.forEach(function (node) {
-        var api = createOperationHTML(dataString, node);
-        divList.append(api);
-    });
-}
-;
-function loadSystems(dataString) {
-    var divList = $("#SystemList");
-    divList.empty();
-    var list = getCategory(dataString, "System").nodeDataArray;
-    list.forEach(function (node) {
-        var api = createMenuItem(dataString, node);
-        divList.append(api);
-    });
-}
-;
-function bindMenu() {
-    var showHideAllFalseLink = $("#showHideAllFalseLink");
-    showHideAllFalseLink.click(function () { Util.showHideAll(myDiagram, false, false); });
-    var showHideAllTrueLink = $("#showHideAllTrueLink");
-    showHideAllTrueLink.click(function () { Util.showHideAll(myDiagram, true, true); });
-}
-function loadEvents(dataString) {
-    var divList = $("#EventList");
-    divList.empty();
-    var list = getCategory(dataString, "Event").nodeDataArray;
-    list.forEach(function (node) {
-        var api = createMenuItem(dataString, node);
-        divList.append(api);
-    });
-}
-;
-function save() {
-    return __awaiter(this, void 0, void 0, function* () {
-        Util.saveData(myDiagram.model.toJson(), project);
-        unsavedChanges(false);
-        myDiagram.isModified = false;
-    });
-}
-function load() {
-    return __awaiter(this, void 0, void 0, function* () {
-        var data = yield Util.getData(project);
-        if (data == null) {
-        }
-        else {
-            myDiagram.model = go.Model.fromJson(data);
-            myDiagram.nodes.each((n) => { if (n.data.category == "Attribute")
-                n.visible = false; });
-        }
-        dataString = data;
-        unsavedChanges(false);
-    });
-}
-function generateImageLink(x) {
-    x.href = myDiagram.makeImage({
-        scale: 5,
-        maxSize: new go.Size(Infinity, Infinity)
-    }).src;
-}
-function updateDebug(dataString) {
-    if (debugMode)
-        $("#dataDebugger").text(dataString);
-}
+    function getInnerNodes(dataString, key) {
+        var data = JSON.parse(dataString).nodeDataArray.filter(function (node) {
+            return node.group == key;
+        });
+        return data;
+    }
+    ;
+    function hideOtherNodes() {
+        Main._diagram.nodes.each((n) => {
+            if (n.data.category == 'RR')
+                n.visible = false;
+        });
+        Main._diagram.links.each((n) => {
+            if (n.data.category == 'Mapping')
+                n.visible = false;
+        });
+    }
+    Main.hideOtherNodes = hideOtherNodes;
+    function createMenuItem(dataString, node) {
+        var a = $("<a class='dropdown-item' href='#' id='navbarDropdown' role='button' data-toggle='dropdown' aria-haspopup='true' aria-expanded='false'>" + node.name + "</a>").on("click", function () { includeNode(node.key); });
+        return a;
+    }
+    function createOperationHTML(dataString, node) {
+        var listItem = $("<li class='dropdown-submenu'/>");
+        var a = $("<a class='dropdown-item dropdown-toggle' href='#' id='navbarDropdown' role='button' data-toggle='dropdown' aria-haspopup='true' aria-expanded='false'>" + node.name + "</a>").on("click", function () { includeAPI(node.key); });
+        var ul = $("<ul class='dropdown-menu' aria-labelledby='navbarDropdown'/>");
+        getInnerNodes(dataString, node.key).forEach(function (operationNode) {
+            var li = $("<li/>");
+            var ia = $("<a class='dropdown-item' href='#'>" + operationNode.name + "</a>").on("click", function () { includeNode(operationNode.key); });
+            li.append(ia);
+            ul.append(li);
+        });
+        listItem.append(a);
+        listItem.append(ul);
+        return listItem;
+    }
+    function loadAPIs(dataString) {
+        var divList = $("#APIList");
+        divList.empty();
+        var list = getCategory(dataString, "API").nodeDataArray;
+        list.forEach(function (node) {
+            var api = createOperationHTML(dataString, node);
+            divList.append(api);
+        });
+    }
+    ;
+    function loadSystems(dataString) {
+        var divList = $("#SystemList");
+        divList.empty();
+        var list = getCategory(dataString, "System").nodeDataArray;
+        list.forEach(function (node) {
+            var api = createMenuItem(dataString, node);
+            divList.append(api);
+        });
+    }
+    ;
+    function bindMenu() {
+        var showHideAllFalseLink = $("#showHideAllFalseLink");
+        showHideAllFalseLink.click(function () { Util.showHideAll(Main._diagram, false, false); });
+        var showHideAllTrueLink = $("#showHideAllTrueLink");
+        showHideAllTrueLink.click(function () { Util.showHideAll(Main._diagram, true, true); });
+    }
+    function loadEvents(dataString) {
+        var divList = $("#EventList");
+        divList.empty();
+        var list = getCategory(dataString, "Event").nodeDataArray;
+        list.forEach(function (node) {
+            var api = createMenuItem(dataString, node);
+            divList.append(api);
+        });
+    }
+    ;
+    function save() {
+        return __awaiter(this, void 0, void 0, function* () {
+            Util.saveData(Main._diagram.model.toJson(), _projectName);
+            unsavedChanges(false);
+            Main._diagram.isModified = false;
+        });
+    }
+    Main.save = save;
+    function load() {
+        return __awaiter(this, void 0, void 0, function* () {
+            var data = yield Util.getData(_projectName);
+            if (data == null) {
+            }
+            else {
+                Main._diagram.model = go.Model.fromJson(data);
+                hideOtherNodes();
+            }
+            _dataString = data;
+            unsavedChanges(false);
+        });
+    }
+    Main.load = load;
+    function generateImageLink(x) {
+        x.href = Main._diagram.makeImage({
+            scale: 5,
+            maxSize: new go.Size(Infinity, Infinity)
+        }).src;
+    }
+    Main.generateImageLink = generateImageLink;
+    function updateDebug(dataString) {
+        if (_isDebugMode)
+            $("#dataDebugger").text(dataString);
+    }
+})(Main || (Main = {}));
 var mapper;
 (function (mapper) {
-    var _baseDiagram;
-    var mapperDiagram;
-    var callback;
+    var _mapperDiagram;
+    var _callback;
     function setupModal() {
         $('#mapper-btn-ok').on('click', function () {
-            callback();
+            _callback();
             $('#mapper').hide();
         });
         $('#mapper-btn-cancel1').on('click', function () {
@@ -457,117 +491,84 @@ var mapper;
         setupModal();
         $('#mapper').hide();
         var gojs = go.GraphObject.make;
-        mapperDiagram = gojs(go.Diagram, 'mapperDiv', {
+        _mapperDiagram = gojs(go.Diagram, 'mapperDiv', {
             layout: gojs(go.TreeLayout, { nodeSpacing: 5 }),
+            'linkingTool.archetypeLinkData': { category: 'Mapping' },
             contentAlignment: go.Spot.Center,
             initialDocumentSpot: go.Spot.Center,
             initialViewportSpot: go.Spot.Center
         });
-        mapperDiagram.groupTemplate =
-            gojs(go.Group, "Auto", new go.Binding("position", "xy", go.Point.parse).makeTwoWay(go.Point.stringify), {
-                deletable: false,
-                layout: gojs(go.TreeLayout, {
-                    alignment: go.TreeLayout.AlignmentStart,
-                    angle: 0,
-                    compaction: go.TreeLayout.CompactionNone,
-                    layerSpacing: 16,
-                    layerSpacingParentOverlap: 1,
-                    nodeIndentPastParent: 1.0,
-                    nodeSpacing: 0,
-                    setsPortSpot: false,
-                    setsChildPortSpot: false
-                })
-            }, gojs(go.Shape, { fill: "white", stroke: "lightgray" }), gojs(go.Panel, "Vertical", { defaultAlignment: go.Spot.Left }, gojs(go.TextBlock, { font: "bold 14pt sans-serif", margin: new go.Margin(5, 5, 0, 5) }, new go.Binding("text")), gojs(go.Placeholder, { padding: 5 })));
-        mapperDiagram.nodeTemplate = gojs(go.Node, { movable: false }, { selectionAdorned: false }, gojs('TreeExpanderButton', {
-            width: 14,
-            height: 14,
-            'ButtonIcon.stroke': 'white',
-            'ButtonIcon.strokeWidth': 2,
-            'ButtonBorder.fill': 'DodgerBlue',
-            'ButtonBorder.stroke': null,
-            'ButtonBorder.figure': 'Rectangle',
-            _buttonFillOver: 'RoyalBlue',
-            _buttonStrokeOver: null,
-            _buttonFillPressed: null
-        }), gojs(go.Panel, 'Horizontal', { position: new go.Point(16, 0), alignment: go.Spot.Center }, gojs(go.TextBlock, new go.Binding('text', 'name'))));
-        mapperDiagram.linkTemplate = gojs(go.Link, {
-            selectable: false,
-            routing: go.Link.Orthogonal,
-            fromEndSegmentLength: 4,
-            toEndSegmentLength: 4,
-            fromSpot: new go.Spot(0.001, 1, 7, 0),
-            toSpot: go.Spot.Left
-        }, gojs(go.Shape, { stroke: 'lightgray' }));
-    }
-    mapper.init = init;
-    function oldinit() {
-        setupModal();
-        $('#mapper').hide();
-        var gojs = go.GraphObject.make;
-        mapperDiagram = gojs(go.Diagram, 'mapperDiv', {
-            'commandHandler.copiesTree': true,
-            'commandHandler.deletesTree': true,
-            'linkingTool.archetypeLinkData': { category: 'Mapping' },
-            initialContentAlignment: go.Spot.Center,
-            'undoManager.isEnabled': true
-        });
-        mapperDiagram.nodeTemplate = gojs(go.Node, { movable: false }, { selectionAdorned: false }, gojs('TreeExpanderButton', {
-            width: 14,
-            height: 14,
-            'ButtonIcon.stroke': 'white',
-            'ButtonIcon.strokeWidth': 2,
-            'ButtonBorder.fill': 'DodgerBlue',
-            'ButtonBorder.stroke': null,
-            'ButtonBorder.figure': 'Rectangle',
-            _buttonFillOver: 'RoyalBlue',
-            _buttonStrokeOver: null,
-            _buttonFillPressed: null
-        }), gojs(go.Panel, 'Horizontal', { position: new go.Point(16, 0) }, new go.Binding('background', 'isSelected', function (s) {
-            return s ? 'lightblue' : 'white';
-        }).ofObject(), gojs(go.TextBlock, new go.Binding('text', 'name'))));
-        mapperDiagram.linkTemplate = gojs(go.Link, {
-            selectable: false,
-            routing: go.Link.Orthogonal,
-            fromEndSegmentLength: 4,
-            toEndSegmentLength: 4,
-            fromSpot: new go.Spot(0.001, 1, 7, 0),
-            toSpot: go.Spot.Left
-        }, gojs(go.Shape, { stroke: 'lightgray' }));
-        mapperDiagram.linkTemplateMap.add('Mapping', gojs(go.Link, {
-            isTreeLink: false,
-            isLayoutPositioned: false,
-            layerName: 'Foreground'
-        }, { fromSpot: go.Spot.Right, toSpot: go.Spot.Left }, { relinkableFrom: true, relinkableTo: true }, gojs(go.Shape, { stroke: 'DodgerBlue', strokeWidth: 2 })));
-        mapperDiagram.groupTemplate = gojs(go.Group, 'Auto', new go.Binding('position', 'xy', go.Point.parse).makeTwoWay(go.Point.stringify), {
+        _mapperDiagram.groupTemplate = gojs(go.Group, "Auto", {
+            selectionAdorned: false,
+            layout: gojs(go.TreeLayout, {})
+        }, { deletable: false }, gojs(go.Shape, { fill: "white", stroke: "white" }), gojs(go.Panel, "Vertical", { defaultAlignment: go.Spot.Left }, gojs(go.Placeholder, { padding: 5 })));
+        _mapperDiagram.groupTemplateMap.add('RR', gojs(go.Group, "Auto", {
             deletable: false,
+            movable: false,
             layout: gojs(go.TreeLayout, {
                 alignment: go.TreeLayout.AlignmentStart,
                 angle: 0,
                 compaction: go.TreeLayout.CompactionNone,
-                layerSpacing: 20,
+                layerSpacing: 16,
                 layerSpacingParentOverlap: 1,
                 nodeIndentPastParent: 1.0,
-                nodeSpacing: 1,
+                nodeSpacing: 0,
                 setsPortSpot: false,
                 setsChildPortSpot: false
             })
-        }, gojs(go.Shape, { fill: 'white', stroke: 'lightgray' }), gojs(go.Panel, 'Vertical', { defaultAlignment: go.Spot.Left }, gojs(go.TextBlock, {
-            font: 'bold 12pt Segoe UI',
-            margin: new go.Margin(5, 5, 0, 5),
-            stroke: 'DodgerBlue'
-        }, new go.Binding('name')), gojs(go.Placeholder, { padding: 5 })));
+        }, { selectionAdorned: false }, gojs(go.Shape, { fill: "white", stroke: "white" }), gojs(go.Panel, "Vertical", { defaultAlignment: go.Spot.Left }, gojs(go.TextBlock, { font: "bold 10pt sans-serif", margin: new go.Margin(5, 5, 0, 5) }, new go.Binding("text", "name")), gojs(go.Placeholder, { padding: 5 }))));
+        _mapperDiagram.nodeTemplate = gojs(go.Node, {
+            deletable: false,
+            movable: false,
+            fromLinkable: true,
+            toLinkable: true
+        }, { selectionAdorned: false }, gojs('TreeExpanderButton', {
+            width: 14,
+            height: 14,
+            'ButtonIcon.stroke': 'white',
+            'ButtonIcon.strokeWidth': 2,
+            'ButtonBorder.fill': 'DodgerBlue',
+            'ButtonBorder.stroke': null,
+            'ButtonBorder.figure': 'Rectangle',
+            _buttonFillOver: 'RoyalBlue',
+            _buttonStrokeOver: null,
+            _buttonFillPressed: null
+        }), gojs(go.Panel, 'Horizontal', { position: new go.Point(16, 0), alignment: go.Spot.Center }, new go.Binding('background', 'isSelected', function (s) { return s ? 'lightblue' : 'white'; }).ofObject(), gojs(go.TextBlock, new go.Binding('text', 'name'))));
+        _mapperDiagram.linkTemplate = gojs(go.Link, {
+            selectable: false,
+            routing: go.Link.Orthogonal,
+            fromEndSegmentLength: 4,
+            toEndSegmentLength: 4,
+            fromSpot: new go.Spot(0.001, 1, 7, 0),
+            toSpot: go.Spot.Left
+        }, gojs(go.Shape, { stroke: 'lightgray' }));
+        _mapperDiagram.linkTemplateMap.add('Mapping', gojs(go.Link, {
+            isTreeLink: false,
+            isLayoutPositioned: false,
+            layerName: 'Foreground',
+            relinkableFrom: true,
+            relinkableTo: true
+        }, gojs(go.Shape, { stroke: 'DodgerBlue', strokeWidth: 2, toArrow: "Standard" }), gojs(go.Shape, {
+            stroke: "DodgerBlue",
+            toArrow: "Standard",
+            fill: "DodgerBlue"
+        })));
     }
-    mapper.oldinit = oldinit;
-    function showMapper(baseDiagram, from, to, callback) {
-        callback = callback;
-        mapperDiagram.model = baseDiagram.model;
-        mapperDiagram.nodes.each(function (node) { node.visible = false; });
-        mapperDiagram.findNodeForKey(from.key).visible = true;
-        mapperDiagram.findNodeForKey(to.key).visible = true;
-        mapperDiagram.nodes.each((n) => { if (n.data.group == from.group || n.data.group == to.group)
-            n.visible = true; console.log(n.data); });
-        mapperDiagram.links.each((l) => { if (l.data.group == from.group || l.data.group == to.group)
-            l.visible = true; });
+    mapper.init = init;
+    function showMapper(from, to, callback) {
+        _callback = callback;
+        _mapperDiagram.model = Main._diagram.model;
+        _mapperDiagram.nodes.each(function (node) { node.visible = false; });
+        _mapperDiagram.findNodeForKey(from.key).visible = true;
+        _mapperDiagram.findNodeForKey(to.key).visible = true;
+        Util.showAllParents(_mapperDiagram, from);
+        Util.showAllParents(_mapperDiagram, to);
+        _mapperDiagram.nodes.each((n) => {
+            if (n.data.group == from.key)
+                n.visible = true;
+            _mapperDiagram.nodes.each((m) => { if (m.data.group == n.data.key)
+                m.visible = true; });
+        });
     }
     mapper.showMapper = showMapper;
 })(mapper || (mapper = {}));
@@ -580,6 +581,196 @@ var data;
     }
     data.linkData = linkData;
 })(data || (data = {}));
+var Template;
+(function (Template) {
+    function domain() {
+        var gojs = go.GraphObject.make;
+        return gojs(go.Group, "Vertical", {
+            fromSpot: go.Spot.AllSides,
+            toSpot: go.Spot.AllSides,
+            stretch: go.GraphObject.Fill,
+            ungroupable: true,
+            computesBoundsAfterDrag: true,
+            computesBoundsIncludingLocation: true,
+            toolTip: Template.toolTip(),
+            mouseDragEnter: function (e, group) { group.isHighlighted = true; },
+            mouseDragLeave: function (e, group) { group.isHighlighted = false; },
+            mouseDrop: function (e, group) { group.addMembers(e.diagram.selection, true); },
+            layout: gojs(go.LayeredDigraphLayout, {
+                setsPortSpots: true,
+                direction: 90
+            }),
+            doubleClick: function (e, obj) { Template.showDetails(e, obj); },
+            contextMenu: gojs(go.Adornment, "Vertical", gojs("ContextMenuButton", gojs(go.TextBlock, "Focus"), {
+                click: function (e, obj) { Util.focusOnAPI(e.diagram, obj.part.data.key); }
+            }), gojs("ContextMenuButton", gojs(go.TextBlock, "New API"), {
+                click: function (e, obj) {
+                    var diagram = e.diagram;
+                    diagram.startTransaction('new API');
+                    var data = {
+                        category: "API",
+                        isGroup: true,
+                        group: obj.part.data.key,
+                        name: "newAPI"
+                    };
+                    diagram.model.addNodeData(data);
+                    var part = diagram.findPartForData(data);
+                    part.location = diagram.toolManager.contextMenuTool.mouseDownPoint;
+                    diagram.commitTransaction('new API');
+                    var txt = part.findObject("name");
+                    diagram.commandHandler.editTextBlock(txt);
+                }
+            }), Template.contextMenuHide(), Template.contextMenuDetails())
+        }, gojs(go.TextBlock, {
+            name: "name",
+            margin: 8,
+            maxSize: new go.Size(160, NaN),
+            wrap: go.TextBlock.WrapFit,
+            stroke: "darkGray",
+            editable: true
+        }, new go.Binding("text", "name").makeTwoWay()), gojs(go.Panel, "Auto", gojs(go.Shape, "RoundedRectangle", {
+            fill: "white",
+            strokeWidth: 1,
+            stroke: "darkGray",
+            strokeDashArray: [5, 10]
+        }), gojs(go.Placeholder, {
+            padding: 20
+        })));
+    }
+    Template.domain = domain;
+})(Template || (Template = {}));
+var Template;
+(function (Template) {
+    function event() {
+        var gojs = go.GraphObject.make;
+        return gojs(go.Group, "Vertical", {
+            alignment: go.Spot.Center
+        }, gojs(go.Panel, "Auto", {
+            width: 50,
+            height: 50,
+            toolTip: Template.toolTip(),
+            doubleClick: function (e, obj) { Template.showDetails(e, obj); },
+            contextMenu: gojs(go.Adornment, "Vertical", Template.contextMenuFocus(), Template.contextMenuHide(), Template.contextItemReferenceFrom(), Template.contextItemReferenceTo(), Template.contextMenuDetails()),
+        }, gojs(go.Shape, "Hexagon", {
+            fill: "#0F6E00",
+            strokeWidth: 0,
+            portId: "",
+            cursor: "pointer",
+            fromLinkable: true,
+            toLinkable: true,
+            fromSpot: go.Spot.AllSides,
+            toSpot: go.Spot.AllSides
+        }), gojs(go.Panel, "Auto", Template.infoIcon())), gojs(go.TextBlock, {
+            name: "name",
+            margin: 10,
+            wrap: go.TextBlock.WrapFit,
+            textAlign: "center",
+            stroke: "#0F6E00",
+            editable: true
+        }, new go.Binding("text", "name").makeTwoWay()));
+    }
+    Template.event = event;
+})(Template || (Template = {}));
+var Template;
+(function (Template) {
+    function link() {
+        var gojs = go.GraphObject.make;
+        return gojs(go.Link, {
+            curve: go.Link.JumpOver,
+            corner: 5,
+            toolTip: Template.toolTip(),
+            doubleClick: function (e, obj) {
+                var from = e.diagram.model.findNodeDataForKey(obj.part.data.from);
+                var to = e.diagram.model.findNodeDataForKey(obj.part.data.to);
+                $('#mapper').show();
+                mapper.showMapper(from, to, function () { Main.hideOtherNodes(); });
+            },
+            contextMenu: gojs(go.Adornment, "Vertical", gojs("ContextMenuButton", gojs(go.TextBlock, "Mapping"), {
+                click: function (e, obj) {
+                    var from = e.diagram.model.findNodeDataForKey(obj.part.data.from);
+                    var to = e.diagram.model.findNodeDataForKey(obj.part.data.to);
+                    $('#mapper').show();
+                    mapper.showMapper(from, to, function () { Main.hideOtherNodes(); });
+                }
+            }))
+        }, gojs(go.Shape, {
+            stroke: "gray",
+            strokeWidth: 1,
+            toArrow: "Standard"
+        }), gojs(go.Shape, {
+            toArrow: "Standard",
+            stroke: "gray",
+            fill: "gray"
+        }));
+    }
+    Template.link = link;
+})(Template || (Template = {}));
+var Template;
+(function (Template) {
+    function operation() {
+        var gojs = go.GraphObject.make;
+        return gojs(go.Group, "Vertical", {
+            alignment: go.Spot.Center
+        }, gojs(go.Panel, "Auto", {
+            width: 20,
+            height: 20,
+            toolTip: Template.toolTip(),
+            doubleClick: function (e, obj) { Template.showDetails(e, obj); },
+            contextMenu: gojs(go.Adornment, "Vertical", Template.contextMenuFocus(), Template.contextMenuHide(), Template.contextItemReferenceTo(), Template.contextItemReferenceFrom(), Template.contextMenuDetails())
+        }, gojs(go.Shape, "Circle", {
+            fill: "#002776",
+            strokeWidth: 0,
+            portId: "",
+            cursor: "pointer",
+            fromLinkable: true,
+            toLinkable: true,
+            fromSpot: go.Spot.AllSides,
+            toSpot: go.Spot.AllSides,
+            alignment: go.Spot.Center
+        })), gojs(go.TextBlock, {
+            name: "name",
+            margin: 10,
+            wrap: go.TextBlock.WrapFit,
+            textAlign: "center",
+            stroke: "white",
+            editable: true
+        }, new go.Binding("text", "name").makeTwoWay()));
+    }
+    Template.operation = operation;
+})(Template || (Template = {}));
+var Template;
+(function (Template) {
+    function internalOperation() {
+        var gojs = go.GraphObject.make;
+        return gojs(go.Group, "Vertical", {
+            alignment: go.Spot.Center
+        }, gojs(go.Panel, "Auto", {
+            width: 20,
+            height: 20,
+            toolTip: Template.toolTip(),
+            doubleClick: function (e, obj) { Template.showDetails(e, obj); },
+            contextMenu: gojs(go.Adornment, "Vertical", Template.contextMenuFocus(), Template.contextMenuHide(), Template.contextItemReferenceTo(), Template.contextItemReferenceFrom(), Template.contextMenuDetails())
+        }, gojs(go.Shape, "Circle", {
+            fill: "#008fc5",
+            strokeWidth: 0,
+            portId: "",
+            cursor: "pointer",
+            fromLinkable: true,
+            toLinkable: true,
+            fromSpot: go.Spot.AllSides,
+            toSpot: go.Spot.AllSides,
+            alignment: go.Spot.Center
+        })), gojs(go.TextBlock, {
+            name: "name",
+            margin: 10,
+            wrap: go.TextBlock.WrapFit,
+            textAlign: "center",
+            stroke: "white",
+            editable: true
+        }, new go.Binding("text", "name").makeTwoWay()));
+    }
+    Template.internalOperation = internalOperation;
+})(Template || (Template = {}));
 var Template;
 (function (Template) {
     function api() {
@@ -609,7 +800,8 @@ var Template;
                     var data = {
                         category: "Operation",
                         group: obj.part.data.key,
-                        name: "newOperation"
+                        name: "newOperation",
+                        isGroup: true
                     };
                     diagram.model.addNodeData(data);
                     var part = diagram.findPartForData(data);
@@ -693,7 +885,7 @@ var Template;
     function showDetails(e, obj) {
         var node = obj.part.data;
         var diagram = e.diagram;
-        Details.showDetails(diagram, node, function (detail) {
+        Details.showDetails(node, function (detail) {
             diagram.startTransaction();
             diagram.model.setDataProperty(node, "name", detail.name);
             diagram.model.setDataProperty(node, "detailLink", detail.detailLink);
@@ -732,196 +924,6 @@ var Template;
         }), gojs(go.TextBlock, { margin: 9 }, new go.Binding("text", "description")));
     }
     Template.toolTip = toolTip;
-})(Template || (Template = {}));
-var Template;
-(function (Template) {
-    function domain() {
-        var gojs = go.GraphObject.make;
-        return gojs(go.Group, "Vertical", {
-            fromSpot: go.Spot.AllSides,
-            toSpot: go.Spot.AllSides,
-            stretch: go.GraphObject.Fill,
-            ungroupable: true,
-            computesBoundsAfterDrag: true,
-            computesBoundsIncludingLocation: true,
-            toolTip: Template.toolTip(),
-            mouseDragEnter: function (e, group) { group.isHighlighted = true; },
-            mouseDragLeave: function (e, group) { group.isHighlighted = false; },
-            mouseDrop: function (e, group) { group.addMembers(e.diagram.selection, true); },
-            layout: gojs(go.LayeredDigraphLayout, {
-                setsPortSpots: true,
-                direction: 90
-            }),
-            doubleClick: function (e, obj) { Template.showDetails(e, obj); },
-            contextMenu: gojs(go.Adornment, "Vertical", gojs("ContextMenuButton", gojs(go.TextBlock, "Focus"), {
-                click: function (e, obj) { Util.focusOnAPI(e.diagram, obj.part.data.key); }
-            }), gojs("ContextMenuButton", gojs(go.TextBlock, "New API"), {
-                click: function (e, obj) {
-                    var diagram = e.diagram;
-                    diagram.startTransaction('new API');
-                    var data = {
-                        category: "API",
-                        isGroup: true,
-                        group: obj.part.data.key,
-                        name: "newAPI"
-                    };
-                    diagram.model.addNodeData(data);
-                    var part = diagram.findPartForData(data);
-                    part.location = diagram.toolManager.contextMenuTool.mouseDownPoint;
-                    diagram.commitTransaction('new API');
-                    var txt = part.findObject("name");
-                    diagram.commandHandler.editTextBlock(txt);
-                }
-            }), Template.contextMenuHide(), Template.contextMenuDetails())
-        }, gojs(go.TextBlock, {
-            name: "name",
-            margin: 8,
-            maxSize: new go.Size(160, NaN),
-            wrap: go.TextBlock.WrapFit,
-            stroke: "darkGray",
-            editable: true
-        }, new go.Binding("text", "name").makeTwoWay()), gojs(go.Panel, "Auto", gojs(go.Shape, "RoundedRectangle", {
-            fill: "white",
-            strokeWidth: 1,
-            stroke: "darkGray",
-            strokeDashArray: [5, 10]
-        }), gojs(go.Placeholder, {
-            padding: 20
-        })));
-    }
-    Template.domain = domain;
-})(Template || (Template = {}));
-var Template;
-(function (Template) {
-    function event() {
-        var gojs = go.GraphObject.make;
-        return gojs(go.Node, "Vertical", {
-            alignment: go.Spot.Center
-        }, gojs(go.Panel, "Auto", {
-            width: 50,
-            height: 50,
-            toolTip: Template.toolTip(),
-            doubleClick: function (e, obj) { Template.showDetails(e, obj); },
-            contextMenu: gojs(go.Adornment, "Vertical", Template.contextMenuFocus(), Template.contextMenuHide(), Template.contextItemReferenceFrom(), Template.contextItemReferenceTo(), Template.contextMenuDetails()),
-        }, gojs(go.Shape, "Hexagon", {
-            fill: "#0F6E00",
-            strokeWidth: 0,
-            portId: "",
-            cursor: "pointer",
-            fromLinkable: true,
-            toLinkable: true,
-            fromSpot: go.Spot.AllSides,
-            toSpot: go.Spot.AllSides
-        }), gojs(go.Panel, "Auto", Template.infoIcon())), gojs(go.TextBlock, {
-            name: "name",
-            margin: 10,
-            wrap: go.TextBlock.WrapFit,
-            textAlign: "center",
-            stroke: "#0F6E00",
-            editable: true
-        }, new go.Binding("text", "name").makeTwoWay()));
-    }
-    Template.event = event;
-})(Template || (Template = {}));
-var Template;
-(function (Template) {
-    function internalOperation() {
-        var gojs = go.GraphObject.make;
-        return gojs(go.Node, "Vertical", {
-            alignment: go.Spot.Center
-        }, gojs(go.Panel, "Auto", {
-            width: 20,
-            height: 20,
-            toolTip: Template.toolTip(),
-            doubleClick: function (e, obj) { Template.showDetails(e, obj); },
-            contextMenu: gojs(go.Adornment, "Vertical", Template.contextMenuFocus(), Template.contextMenuHide(), Template.contextItemReferenceTo(), Template.contextItemReferenceFrom(), Template.contextMenuDetails())
-        }, gojs(go.Shape, "Circle", {
-            fill: "#008fc5",
-            strokeWidth: 0,
-            portId: "",
-            cursor: "pointer",
-            fromLinkable: true,
-            toLinkable: true,
-            fromSpot: go.Spot.AllSides,
-            toSpot: go.Spot.AllSides,
-            alignment: go.Spot.Center
-        })), gojs(go.TextBlock, {
-            name: "name",
-            margin: 10,
-            wrap: go.TextBlock.WrapFit,
-            textAlign: "center",
-            stroke: "white",
-            editable: true
-        }, new go.Binding("text", "name").makeTwoWay()));
-    }
-    Template.internalOperation = internalOperation;
-})(Template || (Template = {}));
-var Template;
-(function (Template) {
-    function link() {
-        var gojs = go.GraphObject.make;
-        return gojs(go.Link, {
-            curve: go.Link.JumpOver,
-            corner: 5,
-            toolTip: Template.toolTip(),
-            doubleClick: function (e, obj) {
-                var from = e.diagram.model.findNodeDataForKey(obj.part.data.from);
-                var to = e.diagram.model.findNodeDataForKey(obj.part.data.to);
-                $('#mapper').show();
-                mapper.showMapper(myDiagram, from, to, function () { console.log('mapped'); });
-            },
-            contextMenu: gojs(go.Adornment, "Vertical", gojs("ContextMenuButton", gojs(go.TextBlock, "Mapping"), {
-                click: function (e, obj) {
-                    var from = e.diagram.model.findNodeDataForKey(obj.part.data.from);
-                    var to = e.diagram.model.findNodeDataForKey(obj.part.data.to);
-                    $('#mapper').show();
-                    mapper.showMapper(myDiagram, from, to, function () { console.log('mapped'); });
-                }
-            }))
-        }, gojs(go.Shape, {
-            stroke: "gray",
-            strokeWidth: 1,
-            toArrow: "Standard"
-        }), gojs(go.Shape, {
-            toArrow: "Standard",
-            stroke: "gray",
-            fill: "gray"
-        }));
-    }
-    Template.link = link;
-})(Template || (Template = {}));
-var Template;
-(function (Template) {
-    function operation() {
-        var gojs = go.GraphObject.make;
-        return gojs(go.Node, "Vertical", {
-            alignment: go.Spot.Center
-        }, gojs(go.Panel, "Auto", {
-            width: 20,
-            height: 20,
-            toolTip: Template.toolTip(),
-            doubleClick: function (e, obj) { Template.showDetails(e, obj); },
-            contextMenu: gojs(go.Adornment, "Vertical", Template.contextMenuFocus(), Template.contextMenuHide(), Template.contextItemReferenceTo(), Template.contextItemReferenceFrom(), Template.contextMenuDetails())
-        }, gojs(go.Shape, "Circle", {
-            fill: "#002776",
-            strokeWidth: 0,
-            portId: "",
-            cursor: "pointer",
-            fromLinkable: true,
-            toLinkable: true,
-            fromSpot: go.Spot.AllSides,
-            toSpot: go.Spot.AllSides,
-            alignment: go.Spot.Center
-        })), gojs(go.TextBlock, {
-            name: "name",
-            margin: 10,
-            wrap: go.TextBlock.WrapFit,
-            textAlign: "center",
-            stroke: "white",
-            editable: true
-        }, new go.Binding("text", "name").makeTwoWay()));
-    }
-    Template.operation = operation;
 })(Template || (Template = {}));
 var Template;
 (function (Template) {
@@ -1049,19 +1051,6 @@ var Util;
         diagram.commitTransaction();
     }
     Util.focus = focus;
-    function oneLayer(nodes, allData) {
-        var links = allData.linkDataArray.filter(function (link) {
-            return nodes.some(function (node) {
-                return node.key == link.from || node.key == link.to;
-            });
-        });
-        var outerNodes = allData.nodeDataArray.filter(function (node) {
-            return links.some(function (link) {
-                return (link.from == node.key || link.to == node.key);
-            }) && !nodes.some(function (n) { return n.key == node.key; });
-        });
-        return outerNodes;
-    }
     function getData(project) {
         return __awaiter(this, void 0, void 0, function* () {
             $("#Project").text(project);
@@ -1095,5 +1084,13 @@ var Util;
         });
     }
     Util.saveData = saveData;
+    function showAllParents(diagram, nodeData) {
+        var p = diagram.findNodeForKey(nodeData.group);
+        if (p) {
+            p.visible = true;
+            showAllParents(diagram, p.data);
+        }
+    }
+    Util.showAllParents = showAllParents;
 })(Util || (Util = {}));
 //# sourceMappingURL=ts.js.map

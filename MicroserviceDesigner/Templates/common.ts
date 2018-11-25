@@ -73,8 +73,8 @@
         var node: data.nodeData = obj.part.data;
         var diagram: go.Diagram = e.diagram;
 
-        Details.showDetails(diagram, node,
-            function (detail)
+        Details.showDetails(node,
+            function (detail : Details.Detail)
             {
                 diagram.startTransaction();
                 diagram.model.setDataProperty(node, "name", detail.name);

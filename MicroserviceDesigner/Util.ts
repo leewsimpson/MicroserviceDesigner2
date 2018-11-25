@@ -20,7 +20,7 @@ namespace Util
         myDiagram.commitTransaction();
     }
 
-    export function getChildren(diagram: go.Diagram, nodeData: data.nodeData, eval)
+    export function getChildren(diagram: go.Diagram, nodeData: data.nodeData, eval:any)
     {
         var startNode = diagram.findNodeForKey(nodeData.key);
         console.log(nodeData.key);
@@ -127,26 +127,26 @@ namespace Util
         diagram.commitTransaction();    
     }
 
-    function oneLayer(nodes, allData)
-    {
-        var links = allData.linkDataArray.filter(function (link)
-        {
-            return nodes.some(function(node) 
-            {
-                return node.key==link.from || node.key==link.to;
-            });
-        })
+    //function oneLayer(nodes, allData)
+    //{
+    //    var links = allData.linkDataArray.filter(function (link)
+    //    {
+    //        return nodes.some(function(node) 
+    //        {
+    //            return node.key==link.from || node.key==link.to;
+    //        });
+    //    })
 
-        var outerNodes = allData.nodeDataArray.filter(function (node)
-        {
-            return links.some(function (link)
-            {
-                return (link.from == node.key || link.to == node.key) 
-            }) && !nodes.some(function (n){return n.key == node.key});
-        });
+    //    var outerNodes = allData.nodeDataArray.filter(function (node)
+    //    {
+    //        return links.some(function (link)
+    //        {
+    //            return (link.from == node.key || link.to == node.key) 
+    //        }) && !nodes.some(function (n){return n.key == node.key});
+    //    });
 
-        return outerNodes;
-    }
+    //    return outerNodes;
+    //}
 
     export async function getData(project:string)
     {
@@ -169,7 +169,7 @@ namespace Util
         return result;
     }
 
-    export function saveData(d, project:string)
+    export function saveData(d:string, project:string)
     {
         $.ajax(
             {
@@ -187,5 +187,15 @@ namespace Util
                     console.log( errorThrown );
                 }
             });
+    }
+
+    export function showAllParents(diagram: go.Diagram, nodeData: data.nodeData)
+    {
+        var p = diagram.findNodeForKey(nodeData.group);
+        if (p)
+        {
+            p.visible = true;
+            showAllParents(diagram, p.data);
+        }
     }
 }

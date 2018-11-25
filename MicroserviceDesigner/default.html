@@ -53,9 +53,7 @@
     </style>
 </head>
 
-<body onload="init()" class="bg-dark">
-
-
+<body onload="Main.init()" class="bg-dark">
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark mainmenu">
         <ul class="navbar-nav">
             <li class="nav-item dropdown">
@@ -64,9 +62,9 @@
                     File
                 </a>
                 <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                    <a class="dropdown-item" href="#" onclick="save()">Save</a>
-                    <a class="dropdown-item" href="#" onclick="load()">Revert to Last Saved</a>
-                    <a class="dropdown-item" href="#" onclick="save()">Version History</a>
+                    <a class="dropdown-item" href="#" onclick="Main.save()">Save</a>
+                    <a class="dropdown-item" href="#" onclick="Main.load()">Revert to Last Saved</a>
+                    <a class="dropdown-item" href="#" onclick="Main.save()">Version History</a>
                 </div>
             </li>
             <li class="nav-item dropdown">
@@ -75,9 +73,9 @@
                     Export
                 </a>
                 <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                    <a class="dropdown-item" href="#" onclick="download()" ">XLS</a>
+                    <a class="dropdown-item" href="#" onclick="download()">XLS</a>
                     <a class="
-                        dropdown-item" href="#" onclick="generateImageLink(this)" download="x.png">Image</a>
+                        dropdown-item" href="#" onclick="Main.generateImageLink(this)" download="x.png">Image</a>
                 </div>
             </li>
             <li class="nav-item dropdown">
@@ -153,14 +151,17 @@
                     <div>
                         <ul class="nav nav-tabs" id="myTab" role="tablist">
                             <li class="nav-item">
-                                <a class="nav-link active" id="home-tab" data-toggle="tab" href="#home" role="tab" aria-controls="home" aria-selected="true">Main</a>
+                                <a class="nav-link active" id="home-tab" data-toggle="tab" href="#detail-tab-div" role="tab" aria-controls="detail-tab-div" aria-selected="true">Details</a>
                             </li>
                             <li class="nav-item" id="detail-schema-tab">
-                                <a class="nav-link" id="profile-tab" data-toggle="tab" href="#profile" role="tab" aria-controls="profile" aria-selected="false">Schema</a>
+                                <a class="nav-link" id="request-tab" data-toggle="tab" href="#request-tab-div" role="tab" aria-controls="request-tab-div" aria-selected="false">Request</a>
+                            </li>
+                            <li class="nav-item" id="detail-schema-tab">
+                                <a class="nav-link" id="response-tab" data-toggle="tab" href="#response-tab-div" role="tab" aria-controls="response-tab-div" aria-selected="false">Response</a>
                             </li>
                         </ul>
                         <div class="tab-content" id="myTabContent">
-                            <div class="tab-pane fade show active" id="home" role="tabpanel" aria-labelledby="home-tab">
+                            <div class="tab-pane fade show active" id="detail-tab-div" role="tabpanel" aria-labelledby="details">
                                 <div class="md-form mb-5">
                                     <label data-error="wrong" data-success="right" for="detail-name">Name</label>
                                     <input type="text" id="detail-name" class="form-control validate">
@@ -178,14 +179,25 @@
                                     <textarea rows="4" id="detail-description" class="form-control validate"></textarea>
                                 </div>
                             </div>
-                            <div class="tab-pane fade" id="profile" role="tabpanel" aria-labelledby="profile-tab">
+                            <div class="tab-pane fade" id="request-tab-div" role="tabpanel" aria-labelledby="request">
                                 <div class="md-form mb-4" id="detail-schema-div">
                                     <label data-error="wrong" data-success="right" for="detail-description">JSON Schema</label>
-                                    <textarea rows="7" id="detail-schema" class="form-control validate" style="font-family:Consolas,Monaco,Lucida Console,Liberation Mono,DejaVu Sans Mono,Bitstream Vera Sans Mono,Courier New, monospace;"></textarea>
-                                    <button id="detail-fromSchema" class="btn btn-primary">Load from Schema</button>
+                                    <textarea rows="7" id="detail-schema-request" class="form-control validate" style="font-family:Consolas,Monaco,Lucida Console,Liberation Mono,DejaVu Sans Mono,Bitstream Vera Sans Mono,Courier New, monospace;"></textarea>
+                                    <button id="detail-fromSchema-request" class="btn btn-primary">Load from Schema</button>
+                                    <div class="md-form mb-4" id="requestSchemaDiagramDiv" style="background-color:white;width:100%;height:300px">
+                                    </div>
                                 </div>
-                                <div class="md-form mb-4" id="schemaDiagramDiv" style="background-color:white;width:100%;height:300px">
+                                
+                            </div>
+                            <div class="tab-pane fade" id="response-tab-div" role="tabpanel" aria-labelledby="response">
+                                <div class="md-form mb-4" id="detail-schema-div">
+                                    <label data-error="wrong" data-success="right" for="detail-description">JSON Schema</label>
+                                    <textarea rows="7" id="detail-schema-response" class="form-control validate" style="font-family:Consolas,Monaco,Lucida Console,Liberation Mono,DejaVu Sans Mono,Bitstream Vera Sans Mono,Courier New, monospace;"></textarea>
+                                    <button id="detail-fromSchema-response" class="btn btn-primary">Load from Schema</button>
+                                    <div class="md-form mb-4" id="responseSchemaDiagramDiv" style="background-color:white;width:100%;height:300px">
+                                    </div>
                                 </div>
+
                             </div>
                         </div>
                     </div>
@@ -213,15 +225,5 @@
         </div>
     </div>
 
-    <div id="schema" style="visibility:hidden; position: absolute; top:90px;left:40px; right:40px; background-color:rgba(236, 235, 235, 0.904);bottom:40px;z-index: 100">
-        <div class="modal-headerx" style="position: absolute; top:0px;">
-            <h4 style="stroke: darkgray">Schema</h4>
-        </div>
-        <div class="modal-contentx" id="mapperDiv" style="width:100%;height:100%;background-color:rgba(255, 255, 255, 0); border:white"></div>
-        <div class="modal-footerx" style="position: absolute; bottom:10px;right:10px; z-index: 1000">
-            <button type="button" class="btn btn-default" id="mapper-btn-ok">OK</button>
-            <button type="button" class="btn btn-primary" id="mapper-btn-cancel2">Cancel</button>
-        </div>
-    </div>
 </body>
 </html>

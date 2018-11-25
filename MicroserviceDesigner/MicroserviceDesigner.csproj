@@ -37,7 +37,7 @@
     <TypeScriptJSXEmit>None</TypeScriptJSXEmit>
     <TypeScriptModuleKind>None</TypeScriptModuleKind>
     <TypeScriptCompileOnSaveEnabled>True</TypeScriptCompileOnSaveEnabled>
-    <TypeScriptNoImplicitAny>False</TypeScriptNoImplicitAny>
+    <TypeScriptNoImplicitAny>True</TypeScriptNoImplicitAny>
     <TypeScriptRemoveComments>True</TypeScriptRemoveComments>
     <TypeScriptOutFile>ts.js</TypeScriptOutFile>
     <TypeScriptOutDir>
@@ -112,6 +112,8 @@
     <Content Include="test cases.txt" />
     <Content Include="web.config" />
     <Content Include="test.json" />
+    <Content Include="test2.json" />
+    <None Include="Properties\PublishProfiles\Vizzy2 - Web Deploy.pubxml" />
     <None Include="web.Debug.config">
       <DependentUpon>web.config</DependentUpon>
     </None>
