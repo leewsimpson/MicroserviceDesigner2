@@ -12,6 +12,7 @@ namespace Details
         detailLink: string;
         description: string;
         schema?: string;
+        estimatedComplexity?: string;
     }
 
     var callback: (arg0: Detail, nodes: Array<data.nodeData>, links: Array<data.linkData>) => void;
@@ -28,7 +29,8 @@ namespace Details
                 name: $('#detail-name').val() as string,
                 detailLink: $('#detail-url').val() as string,
                 description: $('#detail-description').val() as string,
-                schema: $('#detail-schema').val() as string
+                schema: $('#detail-schema').val() as string,
+                estimatedComplexity: $('#detail-estimatedComplexity').val() as string
             }
 
             if (type == "Operation" && internalChecked)
@@ -107,6 +109,8 @@ namespace Details
             $('#detail-internal-div').show()
         else
             $('#detail-internal-div').hide()
+
+        $('#detail-estimatedComplexity').val(thisNode.estimatedComplexity);
 
 
         if (thisNode.category == 'Operation' || thisNode.category == 'InternalOperation' || thisNode.category == 'System' || thisNode.category == 'Event')

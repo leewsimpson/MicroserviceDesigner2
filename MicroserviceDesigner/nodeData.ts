@@ -10,7 +10,7 @@
         schema?: string;
         description?: string;
         detailLink?: string;
-        //isInternal?: boolean;
+        estimatedComplexity?:string 
     }
 
     export class linkData

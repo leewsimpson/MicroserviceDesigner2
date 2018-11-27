@@ -40,7 +40,15 @@ namespace Main
         const urlParams = new URLSearchParams(window.location.search);
         _projectName = urlParams.get('project');
 
-        if (urlParams.get('debugMode')) _isDebugMode = true;
+        if (urlParams.get('debugMode'))
+        {
+            _isDebugMode = true;
+            $('#dataDebugger').show();
+        }
+        else
+        {
+            $('#dataDebugger').hide();
+        }
 
         load();
 

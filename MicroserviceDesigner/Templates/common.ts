@@ -82,6 +82,7 @@
                 diagram.model.setDataProperty(node, "description", detail.description);
                 diagram.model.setDataProperty(node, "schema", detail.schema);
                 diagram.model.setDataProperty(node, "category", detail.type);
+                diagram.model.setDataProperty(node, "estimatedComplexity", detail.estimatedComplexity);
                 diagram.commitTransaction();
             })
     }
