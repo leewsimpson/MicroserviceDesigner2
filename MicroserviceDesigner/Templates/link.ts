@@ -15,7 +15,7 @@
                     var from = e.diagram.model.findNodeDataForKey(obj.part.data.from);
                     var to = e.diagram.model.findNodeDataForKey(obj.part.data.to);
                     $('#mapper').show();
-                    mapper.showMapper(from, to, function () { Main.hideOtherNodes() });
+                    mapper.showMapper(from, to, function () { Util.hideOtherNodes(Main._diagram) });
                 },
                 contextMenu: gojs(go.Adornment, "Vertical",
                     gojs("ContextMenuButton", gojs(go.TextBlock, "Mapping"), {
@@ -24,7 +24,7 @@
                             var from = e.diagram.model.findNodeDataForKey(obj.part.data.from);
                             var to = e.diagram.model.findNodeDataForKey(obj.part.data.to);
                             $('#mapper').show();
-                            mapper.showMapper(from, to, function () { Main.hideOtherNodes() });
+                            mapper.showMapper(from, to, function () { Util.hideOtherNodes(Main._diagram) });
                         }
                     })
                 )

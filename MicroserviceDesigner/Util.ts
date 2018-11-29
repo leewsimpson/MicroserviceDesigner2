@@ -18,9 +18,25 @@ namespace Util
         myDiagram.links.each(function(node: go.Link) {node.visible = linksVisible;});
         myDiagram.layout = Util.getcurrentLayout();
         myDiagram.commitTransaction();
+        hideOtherNodes(myDiagram);
     }
 
-    export function getChildren(diagram: go.Diagram, nodeData: data.nodeData, eval:any)
+    export function hideOtherNodes(myDiagram: go.Diagram)
+    {
+        myDiagram.nodes.each((n: go.Node) =>
+        {
+            if (n.data.category == 'RR')
+                n.visible = false
+        });
+
+        myDiagram.links.each((n: go.Link) =>
+        {
+            if (n.data.category == 'Mapping')
+                n.visible = false
+        });
+    }
+
+    export function getChildren(diagram: go.Diagram, nodeData: data.nodeData, eval: (arg0: go.Node) => boolean)
     {
         var startNode = diagram.findNodeForKey(nodeData.key);
         console.log(nodeData.key);
@@ -127,27 +143,6 @@ namespace Util
         diagram.commitTransaction();    
     }
 
-    //function oneLayer(nodes, allData)
-    //{
-    //    var links = allData.linkDataArray.filter(function (link)
-    //    {
-    //        return nodes.some(function(node) 
-    //        {
-    //            return node.key==link.from || node.key==link.to;
-    //        });
-    //    })
-
-    //    var outerNodes = allData.nodeDataArray.filter(function (node)
-    //    {
-    //        return links.some(function (link)
-    //        {
-    //            return (link.from == node.key || link.to == node.key) 
-    //        }) && !nodes.some(function (n){return n.key == node.key});
-    //    });
-
-    //    return outerNodes;
-    //}
-
     export async function getData(project:string)
     {
         $("#Project").text(project);
@@ -165,7 +160,7 @@ namespace Util
             {
                 url: "https://vizzyapi.azurewebsites.net/api/data/" + project + "/" + id,
             });
-            
+           
         return result;
     }
 

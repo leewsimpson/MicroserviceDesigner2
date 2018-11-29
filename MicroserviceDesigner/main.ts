@@ -18,23 +18,6 @@ namespace Main
         }
     }
 
-
-    //function confirmModal(callback: { (arg0: boolean): void; (arg0: boolean): void; })
-    //{
-    //    $('#modal-btn-si').on('click', function ()
-    //    {
-    //        callback(true);
-    //        $('#confirmModal').modal('hide');
-    //    });
-
-    //    $('#modal-btn-no').on('click', function ()
-    //    {
-    //        callback(false);
-    //        $('#confirmModal').modal('hide');
-    //    });
-    //};
-
-
     export async function init()
     {
         const urlParams = new URLSearchParams(window.location.search);
@@ -229,6 +212,20 @@ namespace Main
                     node.visible = true;
                 }
             });
+
+            console.log(_diagram.links.count);
+            _diagram.links.each((l) =>
+            {
+                if (l.fromNode && l.toNode)
+                {
+                    console.log(l.data);
+                    if (l.fromNode.data.key == key || l.toNode.data.key == key)
+                    {
+                        l.visible = true;
+                    }
+                }
+            });
+
             _diagram.layout = Util.getcurrentLayout();;
             _diagram.commitTransaction();
         }
@@ -256,21 +253,6 @@ namespace Main
         });
         return data;
     };
-
-    export function hideOtherNodes()
-    {
-        _diagram.nodes.each((n: go.Node) =>
-        {
-            if (n.data.category == 'RR')
-                n.visible = false
-        });
-
-        _diagram.links.each((n: go.Link) =>
-        {
-            if (n.data.category == 'Mapping')
-                n.visible = false
-        });
-    }
 
     function createMenuItem(dataString: string, node: data.nodeData)
     {
@@ -364,10 +346,20 @@ namespace Main
         }
         else
         {
-            _diagram.model = go.Model.fromJson(data);
-            hideOtherNodes();
+            var model = go.Model.fromJson(data);
+
+            model.nodeDataArray.forEach((n: data.nodeData) =>
+            {
+                if (n.category == 'System') n.isGroup = true;
+                if (n.category == 'Operation') n.isGroup = true;
+                if (n.category == 'Event') n.isGroup = true;
+            });
+
+            _diagram.model = model;
+            Util.hideOtherNodes(_diagram);
         }
-        _dataString = data;
+
+        _dataString = JSON.stringify(model);
         unsavedChanges(false);
     }
 

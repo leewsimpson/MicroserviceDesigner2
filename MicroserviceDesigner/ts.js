@@ -73,7 +73,7 @@ var Details;
         else {
             _responseNode = res.data;
         }
-        Main.hideOtherNodes();
+        Util.hideOtherNodes(Main._diagram);
         if (thisNode.category == 'Operation' || thisNode.category == 'InternalOperation')
             $('#detail-internal-div').show();
         else
@@ -123,7 +123,7 @@ var Details;
             node.visible = false; });
         _requestSchemaDiagram.commitTransaction();
         showOnlyThisNode(diagram, rootNode);
-        Main.hideOtherNodes();
+        Util.hideOtherNodes(Main._diagram);
     }
     function initSchemaDiagram(divName) {
         var gojs = go.GraphObject.make;
@@ -357,6 +357,15 @@ var Main;
                     node.visible = true;
                 }
             });
+            console.log(Main._diagram.links.count);
+            Main._diagram.links.each((l) => {
+                if (l.fromNode && l.toNode) {
+                    console.log(l.data);
+                    if (l.fromNode.data.key == key || l.toNode.data.key == key) {
+                        l.visible = true;
+                    }
+                }
+            });
             Main._diagram.layout = Util.getcurrentLayout();
             ;
             Main._diagram.commitTransaction();
@@ -379,17 +388,6 @@ var Main;
         return data;
     }
     ;
-    function hideOtherNodes() {
-        Main._diagram.nodes.each((n) => {
-            if (n.data.category == 'RR')
-                n.visible = false;
-        });
-        Main._diagram.links.each((n) => {
-            if (n.data.category == 'Mapping')
-                n.visible = false;
-        });
-    }
-    Main.hideOtherNodes = hideOtherNodes;
     function createMenuItem(dataString, node) {
         var a = $("<a class='dropdown-item' href='#' id='navbarDropdown' role='button' data-toggle='dropdown' aria-haspopup='true' aria-expanded='false'>" + node.name + "</a>").on("click", function () { includeNode(node.key); });
         return a;
@@ -458,10 +456,19 @@ var Main;
             if (data == null) {
             }
             else {
-                Main._diagram.model = go.Model.fromJson(data);
-                hideOtherNodes();
+                var model = go.Model.fromJson(data);
+                model.nodeDataArray.forEach((n) => {
+                    if (n.category == 'System')
+                        n.isGroup = true;
+                    if (n.category == 'Operation')
+                        n.isGroup = true;
+                    if (n.category == 'Event')
+                        n.isGroup = true;
+                });
+                Main._diagram.model = model;
+                Util.hideOtherNodes(Main._diagram);
             }
-            _dataString = data;
+            _dataString = JSON.stringify(model);
             unsavedChanges(false);
         });
     }
@@ -588,6 +595,196 @@ var data;
     }
     data.linkData = linkData;
 })(data || (data = {}));
+var Template;
+(function (Template) {
+    function domain() {
+        var gojs = go.GraphObject.make;
+        return gojs(go.Group, "Vertical", {
+            fromSpot: go.Spot.AllSides,
+            toSpot: go.Spot.AllSides,
+            stretch: go.GraphObject.Fill,
+            ungroupable: true,
+            computesBoundsAfterDrag: true,
+            computesBoundsIncludingLocation: true,
+            toolTip: Template.toolTip(),
+            mouseDragEnter: function (e, group) { group.isHighlighted = true; },
+            mouseDragLeave: function (e, group) { group.isHighlighted = false; },
+            mouseDrop: function (e, group) { group.addMembers(e.diagram.selection, true); },
+            layout: gojs(go.LayeredDigraphLayout, {
+                setsPortSpots: true,
+                direction: 90
+            }),
+            doubleClick: function (e, obj) { Template.showDetails(e, obj); },
+            contextMenu: gojs(go.Adornment, "Vertical", gojs("ContextMenuButton", gojs(go.TextBlock, "Focus"), {
+                click: function (e, obj) { Util.focusOnAPI(e.diagram, obj.part.data.key); }
+            }), gojs("ContextMenuButton", gojs(go.TextBlock, "New API"), {
+                click: function (e, obj) {
+                    var diagram = e.diagram;
+                    diagram.startTransaction('new API');
+                    var data = {
+                        category: "API",
+                        isGroup: true,
+                        group: obj.part.data.key,
+                        name: "newAPI"
+                    };
+                    diagram.model.addNodeData(data);
+                    var part = diagram.findPartForData(data);
+                    part.location = diagram.toolManager.contextMenuTool.mouseDownPoint;
+                    diagram.commitTransaction('new API');
+                    var txt = part.findObject("name");
+                    diagram.commandHandler.editTextBlock(txt);
+                }
+            }), Template.contextMenuHide(), Template.contextMenuDetails())
+        }, gojs(go.TextBlock, {
+            name: "name",
+            margin: 8,
+            maxSize: new go.Size(160, NaN),
+            wrap: go.TextBlock.WrapFit,
+            stroke: "darkGray",
+            editable: true
+        }, new go.Binding("text", "name").makeTwoWay()), gojs(go.Panel, "Auto", gojs(go.Shape, "RoundedRectangle", {
+            fill: "white",
+            strokeWidth: 1,
+            stroke: "darkGray",
+            strokeDashArray: [5, 10]
+        }), gojs(go.Placeholder, {
+            padding: 20
+        })));
+    }
+    Template.domain = domain;
+})(Template || (Template = {}));
+var Template;
+(function (Template) {
+    function event() {
+        var gojs = go.GraphObject.make;
+        return gojs(go.Group, "Vertical", {
+            alignment: go.Spot.Center
+        }, gojs(go.Panel, "Auto", {
+            width: 50,
+            height: 50,
+            toolTip: Template.toolTip(),
+            doubleClick: function (e, obj) { Template.showDetails(e, obj); },
+            contextMenu: gojs(go.Adornment, "Vertical", Template.contextMenuFocus(), Template.contextMenuHide(), Template.contextItemReferenceFrom(), Template.contextItemReferenceTo(), Template.contextMenuDetails()),
+        }, gojs(go.Shape, "Hexagon", {
+            fill: "#0F6E00",
+            strokeWidth: 0,
+            portId: "",
+            cursor: "pointer",
+            fromLinkable: true,
+            toLinkable: true,
+            fromSpot: go.Spot.AllSides,
+            toSpot: go.Spot.AllSides
+        }), gojs(go.Panel, "Auto", Template.infoIcon())), gojs(go.TextBlock, {
+            name: "name",
+            margin: 10,
+            wrap: go.TextBlock.WrapFit,
+            textAlign: "center",
+            stroke: "#0F6E00",
+            editable: true
+        }, new go.Binding("text", "name").makeTwoWay()));
+    }
+    Template.event = event;
+})(Template || (Template = {}));
+var Template;
+(function (Template) {
+    function link() {
+        var gojs = go.GraphObject.make;
+        return gojs(go.Link, {
+            curve: go.Link.JumpOver,
+            corner: 5,
+            toolTip: Template.toolTip(),
+            doubleClick: function (e, obj) {
+                var from = e.diagram.model.findNodeDataForKey(obj.part.data.from);
+                var to = e.diagram.model.findNodeDataForKey(obj.part.data.to);
+                $('#mapper').show();
+                mapper.showMapper(from, to, function () { Util.hideOtherNodes(Main._diagram); });
+            },
+            contextMenu: gojs(go.Adornment, "Vertical", gojs("ContextMenuButton", gojs(go.TextBlock, "Mapping"), {
+                click: function (e, obj) {
+                    var from = e.diagram.model.findNodeDataForKey(obj.part.data.from);
+                    var to = e.diagram.model.findNodeDataForKey(obj.part.data.to);
+                    $('#mapper').show();
+                    mapper.showMapper(from, to, function () { Util.hideOtherNodes(Main._diagram); });
+                }
+            }))
+        }, gojs(go.Shape, {
+            stroke: "gray",
+            strokeWidth: 1,
+            toArrow: "Standard"
+        }), gojs(go.Shape, {
+            toArrow: "Standard",
+            stroke: "gray",
+            fill: "gray"
+        }));
+    }
+    Template.link = link;
+})(Template || (Template = {}));
+var Template;
+(function (Template) {
+    function operation() {
+        var gojs = go.GraphObject.make;
+        return gojs(go.Group, "Vertical", {
+            alignment: go.Spot.Center
+        }, gojs(go.Panel, "Auto", {
+            width: 20,
+            height: 20,
+            toolTip: Template.toolTip(),
+            doubleClick: function (e, obj) { Template.showDetails(e, obj); },
+            contextMenu: gojs(go.Adornment, "Vertical", Template.contextMenuFocus(), Template.contextMenuHide(), Template.contextItemReferenceTo(), Template.contextItemReferenceFrom(), Template.contextMenuDetails())
+        }, gojs(go.Shape, "Circle", {
+            fill: "#002776",
+            strokeWidth: 0,
+            portId: "",
+            cursor: "pointer",
+            fromLinkable: true,
+            toLinkable: true,
+            fromSpot: go.Spot.AllSides,
+            toSpot: go.Spot.AllSides,
+            alignment: go.Spot.Center
+        })), gojs(go.TextBlock, {
+            name: "name",
+            margin: 10,
+            wrap: go.TextBlock.WrapFit,
+            textAlign: "center",
+            stroke: "white",
+            editable: true
+        }, new go.Binding("text", "name").makeTwoWay()));
+    }
+    Template.operation = operation;
+})(Template || (Template = {}));
+var Template;
+(function (Template) {
+    function internalOperation() {
+        var gojs = go.GraphObject.make;
+        return gojs(go.Group, "Vertical", {
+            alignment: go.Spot.Center
+        }, gojs(go.Panel, "Auto", {
+            width: 20,
+            height: 20,
+            toolTip: Template.toolTip(),
+            doubleClick: function (e, obj) { Template.showDetails(e, obj); },
+            contextMenu: gojs(go.Adornment, "Vertical", Template.contextMenuFocus(), Template.contextMenuHide(), Template.contextItemReferenceTo(), Template.contextItemReferenceFrom(), Template.contextMenuDetails())
+        }, gojs(go.Shape, "Circle", {
+            fill: "#008fc5",
+            strokeWidth: 0,
+            portId: "",
+            cursor: "pointer",
+            fromLinkable: true,
+            toLinkable: true,
+            fromSpot: go.Spot.AllSides,
+            toSpot: go.Spot.AllSides,
+            alignment: go.Spot.Center
+        })), gojs(go.TextBlock, {
+            name: "name",
+            margin: 10,
+            wrap: go.TextBlock.WrapFit,
+            textAlign: "center",
+            stroke: "white",
+            editable: true
+        }, new go.Binding("text", "name").makeTwoWay()));
+    }
+    Template.internalOperation = internalOperation;
+})(Template || (Template = {}));
 var Template;
 (function (Template) {
     function api() {
@@ -745,196 +942,6 @@ var Template;
 })(Template || (Template = {}));
 var Template;
 (function (Template) {
-    function domain() {
-        var gojs = go.GraphObject.make;
-        return gojs(go.Group, "Vertical", {
-            fromSpot: go.Spot.AllSides,
-            toSpot: go.Spot.AllSides,
-            stretch: go.GraphObject.Fill,
-            ungroupable: true,
-            computesBoundsAfterDrag: true,
-            computesBoundsIncludingLocation: true,
-            toolTip: Template.toolTip(),
-            mouseDragEnter: function (e, group) { group.isHighlighted = true; },
-            mouseDragLeave: function (e, group) { group.isHighlighted = false; },
-            mouseDrop: function (e, group) { group.addMembers(e.diagram.selection, true); },
-            layout: gojs(go.LayeredDigraphLayout, {
-                setsPortSpots: true,
-                direction: 90
-            }),
-            doubleClick: function (e, obj) { Template.showDetails(e, obj); },
-            contextMenu: gojs(go.Adornment, "Vertical", gojs("ContextMenuButton", gojs(go.TextBlock, "Focus"), {
-                click: function (e, obj) { Util.focusOnAPI(e.diagram, obj.part.data.key); }
-            }), gojs("ContextMenuButton", gojs(go.TextBlock, "New API"), {
-                click: function (e, obj) {
-                    var diagram = e.diagram;
-                    diagram.startTransaction('new API');
-                    var data = {
-                        category: "API",
-                        isGroup: true,
-                        group: obj.part.data.key,
-                        name: "newAPI"
-                    };
-                    diagram.model.addNodeData(data);
-                    var part = diagram.findPartForData(data);
-                    part.location = diagram.toolManager.contextMenuTool.mouseDownPoint;
-                    diagram.commitTransaction('new API');
-                    var txt = part.findObject("name");
-                    diagram.commandHandler.editTextBlock(txt);
-                }
-            }), Template.contextMenuHide(), Template.contextMenuDetails())
-        }, gojs(go.TextBlock, {
-            name: "name",
-            margin: 8,
-            maxSize: new go.Size(160, NaN),
-            wrap: go.TextBlock.WrapFit,
-            stroke: "darkGray",
-            editable: true
-        }, new go.Binding("text", "name").makeTwoWay()), gojs(go.Panel, "Auto", gojs(go.Shape, "RoundedRectangle", {
-            fill: "white",
-            strokeWidth: 1,
-            stroke: "darkGray",
-            strokeDashArray: [5, 10]
-        }), gojs(go.Placeholder, {
-            padding: 20
-        })));
-    }
-    Template.domain = domain;
-})(Template || (Template = {}));
-var Template;
-(function (Template) {
-    function event() {
-        var gojs = go.GraphObject.make;
-        return gojs(go.Group, "Vertical", {
-            alignment: go.Spot.Center
-        }, gojs(go.Panel, "Auto", {
-            width: 50,
-            height: 50,
-            toolTip: Template.toolTip(),
-            doubleClick: function (e, obj) { Template.showDetails(e, obj); },
-            contextMenu: gojs(go.Adornment, "Vertical", Template.contextMenuFocus(), Template.contextMenuHide(), Template.contextItemReferenceFrom(), Template.contextItemReferenceTo(), Template.contextMenuDetails()),
-        }, gojs(go.Shape, "Hexagon", {
-            fill: "#0F6E00",
-            strokeWidth: 0,
-            portId: "",
-            cursor: "pointer",
-            fromLinkable: true,
-            toLinkable: true,
-            fromSpot: go.Spot.AllSides,
-            toSpot: go.Spot.AllSides
-        }), gojs(go.Panel, "Auto", Template.infoIcon())), gojs(go.TextBlock, {
-            name: "name",
-            margin: 10,
-            wrap: go.TextBlock.WrapFit,
-            textAlign: "center",
-            stroke: "#0F6E00",
-            editable: true
-        }, new go.Binding("text", "name").makeTwoWay()));
-    }
-    Template.event = event;
-})(Template || (Template = {}));
-var Template;
-(function (Template) {
-    function internalOperation() {
-        var gojs = go.GraphObject.make;
-        return gojs(go.Group, "Vertical", {
-            alignment: go.Spot.Center
-        }, gojs(go.Panel, "Auto", {
-            width: 20,
-            height: 20,
-            toolTip: Template.toolTip(),
-            doubleClick: function (e, obj) { Template.showDetails(e, obj); },
-            contextMenu: gojs(go.Adornment, "Vertical", Template.contextMenuFocus(), Template.contextMenuHide(), Template.contextItemReferenceTo(), Template.contextItemReferenceFrom(), Template.contextMenuDetails())
-        }, gojs(go.Shape, "Circle", {
-            fill: "#008fc5",
-            strokeWidth: 0,
-            portId: "",
-            cursor: "pointer",
-            fromLinkable: true,
-            toLinkable: true,
-            fromSpot: go.Spot.AllSides,
-            toSpot: go.Spot.AllSides,
-            alignment: go.Spot.Center
-        })), gojs(go.TextBlock, {
-            name: "name",
-            margin: 10,
-            wrap: go.TextBlock.WrapFit,
-            textAlign: "center",
-            stroke: "white",
-            editable: true
-        }, new go.Binding("text", "name").makeTwoWay()));
-    }
-    Template.internalOperation = internalOperation;
-})(Template || (Template = {}));
-var Template;
-(function (Template) {
-    function link() {
-        var gojs = go.GraphObject.make;
-        return gojs(go.Link, {
-            curve: go.Link.JumpOver,
-            corner: 5,
-            toolTip: Template.toolTip(),
-            doubleClick: function (e, obj) {
-                var from = e.diagram.model.findNodeDataForKey(obj.part.data.from);
-                var to = e.diagram.model.findNodeDataForKey(obj.part.data.to);
-                $('#mapper').show();
-                mapper.showMapper(from, to, function () { Main.hideOtherNodes(); });
-            },
-            contextMenu: gojs(go.Adornment, "Vertical", gojs("ContextMenuButton", gojs(go.TextBlock, "Mapping"), {
-                click: function (e, obj) {
-                    var from = e.diagram.model.findNodeDataForKey(obj.part.data.from);
-                    var to = e.diagram.model.findNodeDataForKey(obj.part.data.to);
-                    $('#mapper').show();
-                    mapper.showMapper(from, to, function () { Main.hideOtherNodes(); });
-                }
-            }))
-        }, gojs(go.Shape, {
-            stroke: "gray",
-            strokeWidth: 1,
-            toArrow: "Standard"
-        }), gojs(go.Shape, {
-            toArrow: "Standard",
-            stroke: "gray",
-            fill: "gray"
-        }));
-    }
-    Template.link = link;
-})(Template || (Template = {}));
-var Template;
-(function (Template) {
-    function operation() {
-        var gojs = go.GraphObject.make;
-        return gojs(go.Group, "Vertical", {
-            alignment: go.Spot.Center
-        }, gojs(go.Panel, "Auto", {
-            width: 20,
-            height: 20,
-            toolTip: Template.toolTip(),
-            doubleClick: function (e, obj) { Template.showDetails(e, obj); },
-            contextMenu: gojs(go.Adornment, "Vertical", Template.contextMenuFocus(), Template.contextMenuHide(), Template.contextItemReferenceTo(), Template.contextItemReferenceFrom(), Template.contextMenuDetails())
-        }, gojs(go.Shape, "Circle", {
-            fill: "#002776",
-            strokeWidth: 0,
-            portId: "",
-            cursor: "pointer",
-            fromLinkable: true,
-            toLinkable: true,
-            fromSpot: go.Spot.AllSides,
-            toSpot: go.Spot.AllSides,
-            alignment: go.Spot.Center
-        })), gojs(go.TextBlock, {
-            name: "name",
-            margin: 10,
-            wrap: go.TextBlock.WrapFit,
-            textAlign: "center",
-            stroke: "white",
-            editable: true
-        }, new go.Binding("text", "name").makeTwoWay()));
-    }
-    Template.operation = operation;
-})(Template || (Template = {}));
-var Template;
-(function (Template) {
     function system() {
         var gojs = go.GraphObject.make;
         return gojs(go.Group, "Spot", {
@@ -977,8 +984,20 @@ var Util;
         myDiagram.links.each(function (node) { node.visible = linksVisible; });
         myDiagram.layout = Util.getcurrentLayout();
         myDiagram.commitTransaction();
+        hideOtherNodes(myDiagram);
     }
     Util.showHideAll = showHideAll;
+    function hideOtherNodes(myDiagram) {
+        myDiagram.nodes.each((n) => {
+            if (n.data.category == 'RR')
+                n.visible = false;
+        });
+        myDiagram.links.each((n) => {
+            if (n.data.category == 'Mapping')
+                n.visible = false;
+        });
+    }
+    Util.hideOtherNodes = hideOtherNodes;
     function getChildren(diagram, nodeData, eval) {
         var startNode = diagram.findNodeForKey(nodeData.key);
         console.log(nodeData.key);

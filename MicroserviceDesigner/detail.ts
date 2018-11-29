@@ -103,7 +103,7 @@ namespace Details
         {
             _responseNode = res.data;
         }
-        Main.hideOtherNodes();
+        Util.hideOtherNodes(Main._diagram);
 
         if (thisNode.category == 'Operation' || thisNode.category == 'InternalOperation')
             $('#detail-internal-div').show()
@@ -176,7 +176,7 @@ namespace Details
         _requestSchemaDiagram.nodes.each(function (node: go.Node) { if (node.category == "Attribute") node.visible = false; });
         _requestSchemaDiagram.commitTransaction();
         showOnlyThisNode(diagram, rootNode);
-        Main.hideOtherNodes();
+        Util.hideOtherNodes(Main._diagram);
     }
 
     function initSchemaDiagram(divName: string)
