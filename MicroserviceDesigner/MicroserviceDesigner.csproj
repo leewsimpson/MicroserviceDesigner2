@@ -864,8 +864,6 @@
     <Content Include="lib\jquery\jquery.min.js" />
     <Content Include="lib\jquery\jquery.slim.js" />
     <Content Include="lib\jquery\jquery.slim.min.js" />
-    <Content Include="lib\simplemde\simplemde.min.css" />
-    <Content Include="lib\simplemde\simplemde.min.js" />
     <Content Include="Mapper\mapper.html" />
     <Content Include="only.json" />
     <Content Include="package.json" />
