@@ -215,7 +215,6 @@ var Main;
     async function init() {
         Main._markDownControl = editormd("editorDiv", {
             width: "100%",
-            height: "100%",
             watch: true,
             flowChart: true,
             sequenceDiagram: true,

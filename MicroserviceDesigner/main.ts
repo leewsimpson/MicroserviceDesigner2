@@ -29,7 +29,7 @@ namespace Main
         //_markDownControl = new SimpleMDE({ element: document.getElementById("editor"), spellChecker: false, autofocus:true, parsingConfig: { allowAtxHeaderWithoutSpace: true } });
         _markDownControl = editormd("editorDiv", {
             width: "100%",
-            height: "100%",
+            //height: "90%",
             watch: true,
             flowChart: true,
             sequenceDiagram: true,   
