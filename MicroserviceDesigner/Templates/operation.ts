@@ -6,7 +6,8 @@
 
         return gojs(go.Group, "Vertical",
             {
-                alignment: go.Spot.Center
+                alignment: go.Spot.Center,
+                selectionChanged: function (part: go.Part) { Util.changeSelectionNode(part.data) }
             },
             gojs(go.Panel, "Auto",
                 {

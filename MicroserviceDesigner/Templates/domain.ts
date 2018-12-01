@@ -21,6 +21,7 @@
                         direction: 90
                     }),
                 doubleClick: function (e: go.InputEvent, obj: go.Part) { showDetails(e, obj) },
+                selectionChanged: function (part: go.Part) { Util.changeSelectionNode(part.data) },
                 contextMenu: gojs(go.Adornment, "Vertical",
                     gojs("ContextMenuButton", gojs(go.TextBlock, "Focus"),
                         {

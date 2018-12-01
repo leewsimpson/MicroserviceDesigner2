@@ -17,6 +17,14 @@
     {
       "library": "bootstrap-submenu@3.0.1",
       "destination": "lib/bootstrap-submenu/"
+    },
+    {
+      "library": "simplemde@1.11.2",
+      "destination": "lib/simplemde/"
+    },
+    {
+      "library": "jqueryui@1.12.1",
+      "destination": "lib/jqueryui/"
     }
   ]
 }

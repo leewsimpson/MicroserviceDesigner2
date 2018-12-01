@@ -15,13 +15,72 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
 
+    <!--<link href="lib/simplemde/simplemde.min.css" rel="stylesheet" />
+    <script src="lib/simplemde/simplemde.min.js"></script>-->
+
+    <link href="editormd/editormd.min.css" rel="stylesheet" />
+    <script src="editormd/editormd.min.js"></script>
+    <script src="editormd/en.js"></script>
+
     <script src="node_modules\json-schema-ref-parser\dist\ref-parser.js"></script>
     <script src="lib/gojs/go.js"></script>
+
+    <script src="lib/jqueryui/jquery-ui.js"></script>
+    <link href="lib/jqueryui/jquery-ui.min.css" rel="stylesheet" />
 
     <script src="ts.js">
     </script>
 
+
     <style>
+        body, html {
+            width: 100%;
+            height: 100%;
+            padding: 0;
+            margin: 0;
+        }
+
+        .clearfix:after {
+            content: '';
+            display: table;
+            clear: both;
+        }
+
+        #right {
+            float: right;
+            background-color: BurlyWood;
+            position: absolute;
+            height: calc(100% - 56px);
+            right: 0;
+            left: calc(70% - 6px);
+        }
+
+        #left {
+            width: calc(70% - 6px);
+            float: left;
+            background-color: IndianRed;
+            position: absolute;
+            height: calc(100% - 56px);
+            overflow: hidden;
+        }
+
+        #dragbar {
+            background-color: black;
+            height: 100%;
+            float: right;
+            width: 5px;
+            cursor: col-resize;
+        }
+
+        #ghostbar {
+            width: 5px;
+            background-color: #000;
+            opacity: 0.5;
+            position: absolute;
+            cursor: col-resize;
+            z-index: 999
+        }
+
         .dropdown-menu {
             margin: 0;
         }
@@ -88,6 +147,14 @@
                     <a class="dropdown-item" href="#">Estimate</a>
                 </div>
             </li>
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" id="navbarOptions" role="button" data-toggle="dropdown"
+                   aria-haspopup="true" aria-expanded="false">View Options</a>
+                <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                    <label class="dropdown-item"><input onclick="Options.toggleViewMarkup(this.checked, myDiagramDiv, editorDiv)" type="checkbox" checked="checked" />&nbsp;Markup</label>
+                    <label class="dropdown-item"><input onclick="Options.toggleViewInfoIcons(this.checked)" type="checkbox" checked="checked" />&nbsp;Info Icons</label>
+                </div>
+            </li>
         </ul>
 
         <div class="collapse navbar-collapse justify-content-center">
@@ -121,9 +188,20 @@
             </ul>
         </div>
     </nav>
-    <div class="" style="background-color:white;position: absolute;top:60px;bottom:100px;right:0;left:0;overflow:hidden;">
-        <div id="myDiagramDiv" style="background-color:white;position: absolute;top:0px;bottom:0;right:0;left:0"></div>
+
+    <div class="clearfix">
+        <div id="left">
+            <span id="position"></span>
+            <div id="myDiagramDiv" style="background-color:white;position:absolute; width:calc(100% - 5px);height:100%;overflow:hidden;"></div>
+            <div id="dragbar"></div>
+        </div>
+        <div id="right">
+            <div id="editorDiv">
+                <textarea id="editor" style="display:none;"></textarea>
+            </div>
+        </div>
     </div>
+
     <div class="modal fade" tabindex="-1" role="dialog" aria-labelledby="mySmallModalLabel" aria-hidden="true" id="confirmModal">
         <div class="modal-dialog modal-sm">
             <div class="modal-content">
@@ -233,6 +311,49 @@
             <button type="button" class="btn btn-primary" id="mapper-btn-cancel2">Cancel</button>
         </div>
     </div>
+    <script>
+        //$(function () { $('#leftDiv').resizable() })
+        //$(function () { $('#rightDiv').resizable() })
 
+        //$(function () { $('#rightDiv').resizable(); })
+
+        var dragging = false;
+        $('#dragbar').mousedown(function (e)
+        {
+            e.preventDefault();
+
+            dragging = true;
+            var main = $('#right');
+            var ghostbar = $('<div>',
+                {
+                    id: 'ghostbar',
+                    css: {
+                        height: main.outerHeight(),
+                        top: main.offset().top,
+                        left: main.offset().left
+                    }
+                }).appendTo('body');
+
+            $(document).mousemove(function (e)
+            {
+                ghostbar.css("left", e.pageX + 2);
+            });
+        });
+
+        $(document).mouseup(function (e)
+        {
+            if (dragging)
+            {
+                $('#left').css("width", e.pageX + 2);
+                $('#right').css("left", e.pageX + 2);
+                $('#ghostbar').remove();
+                $(document).unbind('mousemove');
+                dragging = false;
+                Main._markDownControl.previewing();
+                Main._markDownControl.previewing();
+                Main._diagram.requestUpdate();
+            }
+        });
+    </script>
 </body>
 </html>

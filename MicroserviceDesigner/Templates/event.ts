@@ -8,14 +8,15 @@ namespace Template
 
         return gojs(go.Group, "Vertical",
             {
-                alignment: go.Spot.Center
+                alignment: go.Spot.Center,
+                selectionChanged: function (part: go.Part) { Util.changeSelectionNode(part.data) }
             },
             gojs(go.Panel, "Auto",
                 {
                     width: 50,
                     height: 50,
                     toolTip: toolTip(),
-                    doubleClick: function (e: go.InputEvent, obj: go.Part) { showDetails(e, obj) },
+                    doubleClick: function (e: go.InputEvent, obj: go.Part) { showDetails(e, obj) },                    
                     contextMenu: gojs(go.Adornment, "Vertical",
                         contextMenuFocus(),
                         contextMenuHide(),

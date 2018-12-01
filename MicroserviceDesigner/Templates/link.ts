@@ -17,6 +17,7 @@
                     $('#mapper').show();
                     mapper.showMapper(from, to, function () { Util.hideOtherNodes(Main._diagram) });
                 },
+                selectionChanged: function (part: go.Part) { Util.changeSelectionLink(part.data) },
                 contextMenu: gojs(go.Adornment, "Vertical",
                     gojs("ContextMenuButton", gojs(go.TextBlock, "Mapping"), {
                         click: function (e: go.InputEvent, obj: go.Part)

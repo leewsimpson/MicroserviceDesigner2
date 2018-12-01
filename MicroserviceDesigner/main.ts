@@ -3,8 +3,13 @@ namespace Main
     export var _diagram: go.Diagram;
     //var _model: go.GraphLinksModel;
     var _dataString: string;
-    var _projectName: string;
+    export var _projectName: string;
     var _isDebugMode: boolean;
+    export var _selectedKey: number;
+    declare var editormd: any;
+    export let _markDownControl: any;
+    export let _mainMarkDown: string = '';
+
 
     function unsavedChanges(value: boolean)
     {
@@ -20,6 +25,49 @@ namespace Main
 
     export async function init()
     {
+        
+        //_markDownControl = new SimpleMDE({ element: document.getElementById("editor"), spellChecker: false, autofocus:true, parsingConfig: { allowAtxHeaderWithoutSpace: true } });
+        _markDownControl = editormd("editorDiv", {
+            width: "100%",
+            height: "100%",
+            watch: true,
+            flowChart: true,
+            sequenceDiagram: true,   
+            emoji: true,
+            syncScrolling: "single",
+            path: "editormd/lib/",
+            onload: function ()
+            {                _markDownControl.previewing();                _markDownControl.previewing();                //this.previewing();            },
+            onchange: function ()
+            {
+                console.log("onchange =>", this, this.id, this.settings, this.state);
+                if (_selectedKey != null)
+                {
+                    let node = _diagram.findNodeForKey(_selectedKey);
+                    node.data.markDown = _markDownControl.getValue();
+                }
+                else
+                {
+                    _mainMarkDown = _markDownControl.getValue();
+                }
+            }
+        });        $('#editorDiv').on('click', function ()        {            if (_markDownControl.state.preview)            {                _markDownControl.previewing();
+            }
+        });
+        //SimpleMDE.togglePreview(_markDownControl);
+        //_markDownControl.codemirror.on("change", function ()
+        //{
+        //    if (_selectedKey != null)
+        //    {
+        //        let node = _diagram.findNodeForKey(_selectedKey);
+        //        node.data.markDown = _markDownControl.value();
+        //    }
+        //    else
+        //    {
+        //        _mainMarkDown = _markDownControl.value();
+        //    }
+        //});
+
         const urlParams = new URLSearchParams(window.location.search);
         _projectName = urlParams.get('project');
 
@@ -49,6 +97,7 @@ namespace Main
                 },
                 contentAlignment: go.Spot.Center,
                 "undoManager.isEnabled": true,
+                click: function () { Util.changeSelectionNon() },
                 "draggingTool.isGridSnapEnabled": true,
                 //"commandHandler.canDeleteSelection": function ()
                 //{
@@ -332,7 +381,11 @@ namespace Main
 
     export async function save()
     {
-        Util.saveData(_diagram.model.toJson(), _projectName);
+        let data = _diagram.model.toJson();
+        let dataObject = JSON.parse(data);
+        dataObject.mainMarkDown = _mainMarkDown;
+
+        Util.saveData(JSON.stringify(dataObject), _projectName);
         unsavedChanges(false);
         _diagram.isModified = false;
     }
@@ -346,7 +399,7 @@ namespace Main
         }
         else
         {
-            var model = go.Model.fromJson(data);
+            let model = go.Model.fromJson(data.result);
 
             model.nodeDataArray.forEach((n: data.nodeData) =>
             {
@@ -356,10 +409,12 @@ namespace Main
             });
 
             _diagram.model = model;
+            _mainMarkDown = JSON.parse(data.result).mainMarkDown;
+            if (!_mainMarkDown) _mainMarkDown = '';
+            _dataString = JSON.stringify(model);
             Util.hideOtherNodes(_diagram);
+            Util.changeSelectionNon()
         }
-
-        _dataString = JSON.stringify(model);
         unsavedChanges(false);
     }
 

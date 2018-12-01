@@ -107,7 +107,7 @@
                 },
                 cursor: "pointer"
             },
-            new go.Binding("visible", "", function (data, node) { if (data.detailLink) return true; else return false; })
+            new go.Binding("visible", "", function (data, node) { if (data.detailLink && Options._projectOptions.showInfoIcons==true) return true; else return false; })
         );
     }
 

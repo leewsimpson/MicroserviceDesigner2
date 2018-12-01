@@ -23,6 +23,7 @@ namespace Template
                         setsPortSpots: true,
                         direction: 90
                     }),
+                selectionChanged: function (part: go.Part) { Util.changeSelectionNode(part.data) },
                 doubleClick: function (e: go.InputEvent, obj: go.Part) { showDetails(e, obj) },
                 contextMenu: gojs(go.Adornment, "Vertical",
                     gojs("ContextMenuButton", gojs(go.TextBlock, "Focus"),

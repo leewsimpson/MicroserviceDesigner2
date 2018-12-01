@@ -199,19 +199,11 @@ var Details;
         }
     }
 })(Details || (Details = {}));
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 var Main;
 (function (Main) {
     var _dataString;
-    var _projectName;
     var _isDebugMode;
+    Main._mainMarkDown = '';
     function unsavedChanges(value) {
         if (value) {
             $("#unsavedChanges").show();
@@ -220,123 +212,151 @@ var Main;
             $("#unsavedChanges").hide();
         }
     }
-    function init() {
-        return __awaiter(this, void 0, void 0, function* () {
-            const urlParams = new URLSearchParams(window.location.search);
-            _projectName = urlParams.get('project');
-            if (urlParams.get('debugMode')) {
-                _isDebugMode = true;
-                $('#dataDebugger').show();
+    async function init() {
+        Main._markDownControl = editormd("editorDiv", {
+            width: "100%",
+            height: "100%",
+            watch: true,
+            flowChart: true,
+            sequenceDiagram: true,
+            emoji: true,
+            syncScrolling: "single",
+            path: "editormd/lib/",
+            onload: function () {
+                Main._markDownControl.previewing();
+                Main._markDownControl.previewing();
+            },
+            onchange: function () {
+                console.log("onchange =>", this, this.id, this.settings, this.state);
+                if (Main._selectedKey != null) {
+                    let node = Main._diagram.findNodeForKey(Main._selectedKey);
+                    node.data.markDown = Main._markDownControl.getValue();
+                }
+                else {
+                    Main._mainMarkDown = Main._markDownControl.getValue();
+                }
             }
-            else {
-                $('#dataDebugger').hide();
-            }
-            load();
-            var gojs = go.GraphObject.make;
-            Main._diagram = gojs(go.Diagram, "myDiagramDiv", {
-                "toolManager.hoverDelay": 500,
-                LayoutCompleted: function () {
-                },
-                contentAlignment: go.Spot.Center,
-                "undoManager.isEnabled": true,
-                "draggingTool.isGridSnapEnabled": true,
-                allowDrop: true,
-                mouseDrop: function (e) {
-                    if (e.diagram.selection.first().category == "Operation")
-                        e.diagram.currentTool.doCancel();
-                },
-                layout: Util.getcurrentLayout()
-            });
-            Main._diagram.addModelChangedListener(function (evt) {
-                if (evt.isTransactionFinished) {
-                    var latestData = Main._diagram.model.toJson();
-                    if (_dataString != latestData) {
-                        _dataString = latestData;
-                        unsavedChanges(true);
-                    }
-                    loadAPIs(_dataString);
-                    loadSystems(_dataString);
-                    loadEvents(_dataString);
-                    updateDebug(_dataString);
-                    bindMenu();
-                }
-            });
-            Main._diagram.contextMenu = gojs(go.Adornment, "Vertical", gojs("ContextMenuButton", gojs(go.TextBlock, "New API"), {
-                click: function (e, obj) {
-                    var diagram = e.diagram;
-                    diagram.startTransaction('new API');
-                    var data = {
-                        category: "API",
-                        isGroup: true,
-                        name: "newAPI"
-                    };
-                    diagram.model.addNodeData(data);
-                    var part = diagram.findPartForData(data);
-                    part.location = diagram.toolManager.contextMenuTool.mouseDownPoint;
-                    diagram.commitTransaction('new API');
-                    var txt = part.findObject("name");
-                    diagram.commandHandler.editTextBlock(txt);
-                }
-            }), gojs("ContextMenuButton", gojs(go.TextBlock, "New Domain"), {
-                click: function (e, obj) {
-                    var diagram = e.diagram;
-                    diagram.startTransaction('new Domain');
-                    var data = {
-                        category: "Domain",
-                        isGroup: true,
-                        name: "newDomain"
-                    };
-                    diagram.model.addNodeData(data);
-                    var part = diagram.findPartForData(data);
-                    part.location = diagram.toolManager.contextMenuTool.mouseDownPoint;
-                    diagram.commitTransaction('new Domain');
-                    var txt = part.findObject("name");
-                    diagram.commandHandler.editTextBlock(txt);
-                }
-            }), gojs("ContextMenuButton", gojs(go.TextBlock, "New Event"), {
-                click: function (e, obj) {
-                    var diagram = e.diagram;
-                    diagram.startTransaction('new event');
-                    var data = {
-                        category: "Event",
-                        name: "newEvent",
-                        isGroup: true,
-                    };
-                    diagram.model.addNodeData(data);
-                    var part = diagram.findPartForData(data);
-                    part.location = diagram.toolManager.contextMenuTool.mouseDownPoint;
-                    diagram.commitTransaction('new event');
-                    var txt = part.findObject("name");
-                    diagram.commandHandler.editTextBlock(txt);
-                }
-            }), gojs("ContextMenuButton", gojs(go.TextBlock, "New System"), {
-                click: function (e, obj) {
-                    var diagram = e.diagram;
-                    diagram.startTransaction('new system');
-                    var data = {
-                        category: "System",
-                        name: "newSystem",
-                        isGroup: true,
-                    };
-                    diagram.model.addNodeData(data);
-                    var part = diagram.findPartForData(data);
-                    part.location = diagram.toolManager.contextMenuTool.mouseDownPoint;
-                    diagram.commitTransaction('new system');
-                    var txt = part.findObject("name");
-                    diagram.commandHandler.editTextBlock(txt);
-                }
-            }));
-            Main._diagram.groupTemplateMap.add("API", Template.api());
-            Main._diagram.groupTemplateMap.add("Operation", Template.operation());
-            Main._diagram.groupTemplateMap.add("InternalOperation", Template.internalOperation());
-            Main._diagram.groupTemplateMap.add("Event", Template.event());
-            Main._diagram.groupTemplateMap.add("Domain", Template.domain());
-            Main._diagram.groupTemplateMap.add("System", Template.system());
-            Main._diagram.linkTemplateMap.add("", Template.link());
-            Main._diagram.model = new go.GraphLinksModel();
-            mapper.init();
-            Details.init();
         });
+        $('#editorDiv').on('click', function () {
+            if (Main._markDownControl.state.preview) {
+                Main._markDownControl.previewing();
+            }
+        });
+        const urlParams = new URLSearchParams(window.location.search);
+        Main._projectName = urlParams.get('project');
+        if (urlParams.get('debugMode')) {
+            _isDebugMode = true;
+            $('#dataDebugger').show();
+        }
+        else {
+            $('#dataDebugger').hide();
+        }
+        load();
+        var gojs = go.GraphObject.make;
+        Main._diagram = gojs(go.Diagram, "myDiagramDiv", {
+            "toolManager.hoverDelay": 500,
+            LayoutCompleted: function () {
+            },
+            contentAlignment: go.Spot.Center,
+            "undoManager.isEnabled": true,
+            click: function () { Util.changeSelectionNon(); },
+            "draggingTool.isGridSnapEnabled": true,
+            allowDrop: true,
+            mouseDrop: function (e) {
+                if (e.diagram.selection.first().category == "Operation")
+                    e.diagram.currentTool.doCancel();
+            },
+            layout: Util.getcurrentLayout()
+        });
+        Main._diagram.addModelChangedListener(function (evt) {
+            if (evt.isTransactionFinished) {
+                var latestData = Main._diagram.model.toJson();
+                if (_dataString != latestData) {
+                    _dataString = latestData;
+                    unsavedChanges(true);
+                }
+                loadAPIs(_dataString);
+                loadSystems(_dataString);
+                loadEvents(_dataString);
+                updateDebug(_dataString);
+                bindMenu();
+            }
+        });
+        Main._diagram.contextMenu = gojs(go.Adornment, "Vertical", gojs("ContextMenuButton", gojs(go.TextBlock, "New API"), {
+            click: function (e, obj) {
+                var diagram = e.diagram;
+                diagram.startTransaction('new API');
+                var data = {
+                    category: "API",
+                    isGroup: true,
+                    name: "newAPI"
+                };
+                diagram.model.addNodeData(data);
+                var part = diagram.findPartForData(data);
+                part.location = diagram.toolManager.contextMenuTool.mouseDownPoint;
+                diagram.commitTransaction('new API');
+                var txt = part.findObject("name");
+                diagram.commandHandler.editTextBlock(txt);
+            }
+        }), gojs("ContextMenuButton", gojs(go.TextBlock, "New Domain"), {
+            click: function (e, obj) {
+                var diagram = e.diagram;
+                diagram.startTransaction('new Domain');
+                var data = {
+                    category: "Domain",
+                    isGroup: true,
+                    name: "newDomain"
+                };
+                diagram.model.addNodeData(data);
+                var part = diagram.findPartForData(data);
+                part.location = diagram.toolManager.contextMenuTool.mouseDownPoint;
+                diagram.commitTransaction('new Domain');
+                var txt = part.findObject("name");
+                diagram.commandHandler.editTextBlock(txt);
+            }
+        }), gojs("ContextMenuButton", gojs(go.TextBlock, "New Event"), {
+            click: function (e, obj) {
+                var diagram = e.diagram;
+                diagram.startTransaction('new event');
+                var data = {
+                    category: "Event",
+                    name: "newEvent",
+                    isGroup: true,
+                };
+                diagram.model.addNodeData(data);
+                var part = diagram.findPartForData(data);
+                part.location = diagram.toolManager.contextMenuTool.mouseDownPoint;
+                diagram.commitTransaction('new event');
+                var txt = part.findObject("name");
+                diagram.commandHandler.editTextBlock(txt);
+            }
+        }), gojs("ContextMenuButton", gojs(go.TextBlock, "New System"), {
+            click: function (e, obj) {
+                var diagram = e.diagram;
+                diagram.startTransaction('new system');
+                var data = {
+                    category: "System",
+                    name: "newSystem",
+                    isGroup: true,
+                };
+                diagram.model.addNodeData(data);
+                var part = diagram.findPartForData(data);
+                part.location = diagram.toolManager.contextMenuTool.mouseDownPoint;
+                diagram.commitTransaction('new system');
+                var txt = part.findObject("name");
+                diagram.commandHandler.editTextBlock(txt);
+            }
+        }));
+        Main._diagram.groupTemplateMap.add("API", Template.api());
+        Main._diagram.groupTemplateMap.add("Operation", Template.operation());
+        Main._diagram.groupTemplateMap.add("InternalOperation", Template.internalOperation());
+        Main._diagram.groupTemplateMap.add("Event", Template.event());
+        Main._diagram.groupTemplateMap.add("Domain", Template.domain());
+        Main._diagram.groupTemplateMap.add("System", Template.system());
+        Main._diagram.linkTemplateMap.add("", Template.link());
+        Main._diagram.model = new go.GraphLinksModel();
+        mapper.init();
+        Details.init();
     }
     Main.init = init;
     ;
@@ -442,35 +462,38 @@ var Main;
         });
     }
     ;
-    function save() {
-        return __awaiter(this, void 0, void 0, function* () {
-            Util.saveData(Main._diagram.model.toJson(), _projectName);
-            unsavedChanges(false);
-            Main._diagram.isModified = false;
-        });
+    async function save() {
+        let data = Main._diagram.model.toJson();
+        let dataObject = JSON.parse(data);
+        dataObject.mainMarkDown = Main._mainMarkDown;
+        Util.saveData(JSON.stringify(dataObject), Main._projectName);
+        unsavedChanges(false);
+        Main._diagram.isModified = false;
     }
     Main.save = save;
-    function load() {
-        return __awaiter(this, void 0, void 0, function* () {
-            var data = yield Util.getData(_projectName);
-            if (data == null) {
-            }
-            else {
-                var model = go.Model.fromJson(data);
-                model.nodeDataArray.forEach((n) => {
-                    if (n.category == 'System')
-                        n.isGroup = true;
-                    if (n.category == 'Operation')
-                        n.isGroup = true;
-                    if (n.category == 'Event')
-                        n.isGroup = true;
-                });
-                Main._diagram.model = model;
-                Util.hideOtherNodes(Main._diagram);
-            }
+    async function load() {
+        var data = await Util.getData(Main._projectName);
+        if (data == null) {
+        }
+        else {
+            let model = go.Model.fromJson(data.result);
+            model.nodeDataArray.forEach((n) => {
+                if (n.category == 'System')
+                    n.isGroup = true;
+                if (n.category == 'Operation')
+                    n.isGroup = true;
+                if (n.category == 'Event')
+                    n.isGroup = true;
+            });
+            Main._diagram.model = model;
+            Main._mainMarkDown = JSON.parse(data.result).mainMarkDown;
+            if (!Main._mainMarkDown)
+                Main._mainMarkDown = '';
             _dataString = JSON.stringify(model);
-            unsavedChanges(false);
-        });
+            Util.hideOtherNodes(Main._diagram);
+            Util.changeSelectionNon();
+        }
+        unsavedChanges(false);
     }
     Main.load = load;
     function generateImageLink(x) {
@@ -615,6 +638,7 @@ var Template;
                 direction: 90
             }),
             doubleClick: function (e, obj) { Template.showDetails(e, obj); },
+            selectionChanged: function (part) { Util.changeSelectionNode(part.data); },
             contextMenu: gojs(go.Adornment, "Vertical", gojs("ContextMenuButton", gojs(go.TextBlock, "Focus"), {
                 click: function (e, obj) { Util.focusOnAPI(e.diagram, obj.part.data.key); }
             }), gojs("ContextMenuButton", gojs(go.TextBlock, "New API"), {
@@ -658,7 +682,8 @@ var Template;
     function event() {
         var gojs = go.GraphObject.make;
         return gojs(go.Group, "Vertical", {
-            alignment: go.Spot.Center
+            alignment: go.Spot.Center,
+            selectionChanged: function (part) { Util.changeSelectionNode(part.data); }
         }, gojs(go.Panel, "Auto", {
             width: 50,
             height: 50,
@@ -699,6 +724,7 @@ var Template;
                 $('#mapper').show();
                 mapper.showMapper(from, to, function () { Util.hideOtherNodes(Main._diagram); });
             },
+            selectionChanged: function (part) { Util.changeSelectionLink(part.data); },
             contextMenu: gojs(go.Adornment, "Vertical", gojs("ContextMenuButton", gojs(go.TextBlock, "Mapping"), {
                 click: function (e, obj) {
                     var from = e.diagram.model.findNodeDataForKey(obj.part.data.from);
@@ -724,7 +750,8 @@ var Template;
     function operation() {
         var gojs = go.GraphObject.make;
         return gojs(go.Group, "Vertical", {
-            alignment: go.Spot.Center
+            alignment: go.Spot.Center,
+            selectionChanged: function (part) { Util.changeSelectionNode(part.data); }
         }, gojs(go.Panel, "Auto", {
             width: 20,
             height: 20,
@@ -757,7 +784,8 @@ var Template;
     function internalOperation() {
         var gojs = go.GraphObject.make;
         return gojs(go.Group, "Vertical", {
-            alignment: go.Spot.Center
+            alignment: go.Spot.Center,
+            selectionChanged: function (part) { Util.changeSelectionNode(part.data); }
         }, gojs(go.Panel, "Auto", {
             width: 20,
             height: 20,
@@ -804,6 +832,7 @@ var Template;
                 setsPortSpots: true,
                 direction: 90
             }),
+            selectionChanged: function (part) { Util.changeSelectionNode(part.data); },
             doubleClick: function (e, obj) { Template.showDetails(e, obj); },
             contextMenu: gojs(go.Adornment, "Vertical", gojs("ContextMenuButton", gojs(go.TextBlock, "Focus"), {
                 click: function (e, obj) { Util.focusOnAPI(e.diagram, obj.part.data.key); }
@@ -926,7 +955,7 @@ var Template;
                 window.open(obj.part.data.detailLink, "new");
             },
             cursor: "pointer"
-        }, new go.Binding("visible", "", function (data, node) { if (data.detailLink)
+        }, new go.Binding("visible", "", function (data, node) { if (data.detailLink && Options._projectOptions.showInfoIcons == true)
             return true;
         else
             return false; }));
@@ -949,6 +978,7 @@ var Template;
             height: 50,
             toolTip: Template.toolTip(),
             doubleClick: function (e, obj) { Template.showDetails(e, obj); },
+            selectionChanged: function (part) { Util.changeSelectionNode(part.data); },
             contextMenu: gojs(go.Adornment, "Vertical", Template.contextMenuFocus(), Template.contextMenuHide(), Template.contextItemReferenceTo(), Template.contextItemReferenceFrom(), Template.contextMenuDetails())
         }, gojs(go.Panel, "Auto", gojs(go.Shape, "RoundedRectangle", {
             fill: "gray",
@@ -971,6 +1001,37 @@ var Template;
 })(Template || (Template = {}));
 var Util;
 (function (Util) {
+    function changeSelectionNon() {
+        Main._selectedKey = null;
+        $("#selectedNodeText").text(Main._projectName);
+        Main._markDownControl.setValue(Main._mainMarkDown);
+        if (!Main._markDownControl.state.preview) {
+            Main._markDownControl.previewing();
+        }
+    }
+    Util.changeSelectionNon = changeSelectionNon;
+    function changeSelectionNode(s) {
+        Main._selectedKey = s.key;
+        $("#selectedNodeText").text(s.name);
+        if (!s.markDown)
+            s.markDown = "";
+        Main._markDownControl.setValue(s.markDown);
+        if (!Main._markDownControl.state.preview) {
+            Main._markDownControl.previewing();
+        }
+    }
+    Util.changeSelectionNode = changeSelectionNode;
+    function changeSelectionLink(s) {
+        Main._selectedKey = s.key;
+        let from = Main._diagram.findNodeForKey(s.from);
+        let to = Main._diagram.findNodeForKey(s.to);
+        $("#selectedNodeText").text(from.data.name + " -> " + to.data.name);
+        Main._markDownControl.setValue(s.markDown);
+        if (!Main._markDownControl.state.preview) {
+            Main._markDownControl.previewing();
+        }
+    }
+    Util.changeSelectionLink = changeSelectionLink;
     function getcurrentLayout() {
         return go.GraphObject.make(go.LayeredDigraphLayout, {
             setsPortSpots: false,
@@ -1078,20 +1139,18 @@ var Util;
         diagram.commitTransaction();
     }
     Util.focus = focus;
-    function getData(project) {
-        return __awaiter(this, void 0, void 0, function* () {
-            $("#Project").text(project);
-            const list = yield $.ajax({
-                url: "https://vizzyapi.azurewebsites.net/api/data/" + project,
-            });
-            if (list.length == 0)
-                return null;
-            const id = list[0];
-            const result = yield $.ajax({
-                url: "https://vizzyapi.azurewebsites.net/api/data/" + project + "/" + id,
-            });
-            return result;
+    async function getData(project) {
+        $("#Project").text(project);
+        const list = await $.ajax({
+            url: "https://vizzyapi.azurewebsites.net/api/data/" + project,
         });
+        if (list.length == 0)
+            return null;
+        const id = list[0];
+        const result = await $.ajax({
+            url: "https://vizzyapi.azurewebsites.net/api/data/" + project + "/" + id,
+        });
+        return { result };
     }
     Util.getData = getData;
     function saveData(d, project) {
@@ -1120,4 +1179,32 @@ var Util;
     }
     Util.showAllParents = showAllParents;
 })(Util || (Util = {}));
+var Options;
+(function (Options) {
+    class Project {
+        constructor() {
+            this.showMarkDown = true;
+            this.showInfoIcons = true;
+        }
+    }
+    Options.Project = Project;
+    Options._projectOptions = new Options.Project();
+    function toggleViewMarkup(show, diagramDiv, editorDiv) {
+        Options._projectOptions.showMarkDown = show;
+        editorDiv.hidden = !show;
+        if (show) {
+            diagramDiv.style.right = "30%";
+        }
+        else {
+            diagramDiv.style.right = "0";
+        }
+        Main._diagram.layout = Util.getcurrentLayout();
+    }
+    Options.toggleViewMarkup = toggleViewMarkup;
+    function toggleViewInfoIcons(show) {
+        Options._projectOptions.showInfoIcons = show;
+        Main._diagram.layout = Util.getcurrentLayout();
+    }
+    Options.toggleViewInfoIcons = toggleViewInfoIcons;
+})(Options || (Options = {}));
 //# sourceMappingURL=ts.js.map

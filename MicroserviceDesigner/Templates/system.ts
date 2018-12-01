@@ -12,6 +12,7 @@ namespace Template
                 height: 50,
                 toolTip: toolTip(),
                 doubleClick: function (e: go.InputEvent, obj: go.Part) { showDetails(e, obj) },
+                selectionChanged: function (part: go.Part) { Util.changeSelectionNode(part.data)},
                 contextMenu: gojs(go.Adornment, "Vertical",
                     contextMenuFocus(),
                     contextMenuHide(),

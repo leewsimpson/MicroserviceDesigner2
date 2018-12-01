@@ -2,6 +2,66 @@
 
 namespace Util
 {
+    export function changeSelectionNon()
+    {
+        Main._selectedKey = null;
+        $("#selectedNodeText").text(Main._projectName);
+
+        Main._markDownControl.setValue(Main._mainMarkDown);
+        if (!Main._markDownControl.state.preview)
+        {
+            Main._markDownControl.previewing();
+        }
+        //if (Main._markDownControl.isPreviewActive())
+        //    SimpleMDE.togglePreview(Main._markDownControl);
+
+        //Main._markDownControl.value(Main._mainMarkDown);
+        //SimpleMDE.togglePreview(Main._markDownControl);
+
+    }
+
+    export function changeSelectionNode(s: data.nodeData)
+    {        
+        Main._selectedKey = s.key;
+        $("#selectedNodeText").text(s.name);
+        if (!s.markDown) s.markDown = "";
+
+
+        Main._markDownControl.setValue(s.markDown);
+        if (!Main._markDownControl.state.preview)
+        {
+            Main._markDownControl.previewing();
+        }
+
+        //if (Main._markDownControl.isPreviewActive())
+          //  SimpleMDE.togglePreview(Main._markDownControl);
+
+        //Main._markDownControl.value(s.markDown);
+        //Main._markDownControl.codemirror.refresh();
+        //if (!Main._markDownControl.isPreviewActive())
+        //    SimpleMDE.togglePreview(Main._markDownControl);
+    }
+    export function changeSelectionLink(s: data.linkData)
+    {
+        Main._selectedKey = s.key;
+        let from = Main._diagram.findNodeForKey(s.from);
+        let to = Main._diagram.findNodeForKey(s.to);
+
+        $("#selectedNodeText").text(from.data.name + " -> " + to.data.name);
+
+        Main._markDownControl.setValue(s.markDown);
+        if (!Main._markDownControl.state.preview)
+        {
+            Main._markDownControl.previewing();
+        }
+        //if (Main._markDownControl.isPreviewActive())
+        //    SimpleMDE.togglePreview(Main._markDownControl);
+        //if (!s.markDown) s.markDown = "";
+        //Main._markDownControl.value(s.markDown);
+
+        //SimpleMDE.togglePreview(Main._markDownControl);
+    }
+
     export function getcurrentLayout()
     {
         return go.GraphObject.make(go.LayeredDigraphLayout,
@@ -161,7 +221,7 @@ namespace Util
                 url: "https://vizzyapi.azurewebsites.net/api/data/" + project + "/" + id,
             });
            
-        return result;
+        return { result };
     }
 
     export function saveData(d:string, project:string)
