@@ -6,7 +6,6 @@ namespace Main
     export var _projectName: string;
     var _isDebugMode: boolean;
     export var _selectedKey: number;
-    declare var editormd: any;
     export let _markDownControl: any;
     export let _mainMarkDown: string = '';
 
@@ -24,50 +23,7 @@ namespace Main
     }
 
     export async function init()
-    {
-        
-        //_markDownControl = new SimpleMDE({ element: document.getElementById("editor"), spellChecker: false, autofocus:true, parsingConfig: { allowAtxHeaderWithoutSpace: true } });
-        _markDownControl = editormd("editorDiv", {
-            width: "100%",
-            //height: "90%",
-            watch: true,
-            flowChart: true,
-            sequenceDiagram: true,   
-            emoji: true,
-            syncScrolling: "single",
-            path: "editormd/lib/",
-            onload: function ()
-            {                _markDownControl.previewing();                _markDownControl.previewing();                //this.previewing();            },
-            onchange: function ()
-            {
-                console.log("onchange =>", this, this.id, this.settings, this.state);
-                if (_selectedKey != null)
-                {
-                    let node = _diagram.findNodeForKey(_selectedKey);
-                    node.data.markDown = _markDownControl.getValue();
-                }
-                else
-                {
-                    _mainMarkDown = _markDownControl.getValue();
-                }
-            }
-        });        $('#editorDiv').on('click', function ()        {            if (_markDownControl.state.preview)            {                _markDownControl.previewing();
-            }
-        });
-        //SimpleMDE.togglePreview(_markDownControl);
-        //_markDownControl.codemirror.on("change", function ()
-        //{
-        //    if (_selectedKey != null)
-        //    {
-        //        let node = _diagram.findNodeForKey(_selectedKey);
-        //        node.data.markDown = _markDownControl.value();
-        //    }
-        //    else
-        //    {
-        //        _mainMarkDown = _markDownControl.value();
-        //    }
-        //});
-
+    {       
         const urlParams = new URLSearchParams(window.location.search);
         _projectName = urlParams.get('project');
 
