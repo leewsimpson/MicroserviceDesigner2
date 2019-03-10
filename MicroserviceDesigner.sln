@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UI", "MicroserviceDesigner\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Services", "Services\Services.csproj", "{16A4A3A3-B237-4535-9AEA-8A4F9342316D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VSTSInspector", "VSTSInspector\VSTSInspector.csproj", "{F14E7308-18C9-411C-B5A3-4D42A3337726}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{16A4A3A3-B237-4535-9AEA-8A4F9342316D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{16A4A3A3-B237-4535-9AEA-8A4F9342316D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{16A4A3A3-B237-4535-9AEA-8A4F9342316D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F14E7308-18C9-411C-B5A3-4D42A3337726}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F14E7308-18C9-411C-B5A3-4D42A3337726}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F14E7308-18C9-411C-B5A3-4D42A3337726}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F14E7308-18C9-411C-B5A3-4D42A3337726}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

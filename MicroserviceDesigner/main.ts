@@ -183,6 +183,7 @@ namespace Main
 
         _diagram.groupTemplateMap.add("API", Template.api());
         _diagram.groupTemplateMap.add("Operation", Template.operation());
+        _diagram.groupTemplateMap.add("Subscriber", Template.subscriber());
         _diagram.groupTemplateMap.add("InternalOperation", Template.internalOperation());
         _diagram.groupTemplateMap.add("Event", Template.event());
         _diagram.groupTemplateMap.add("Domain", Template.domain());

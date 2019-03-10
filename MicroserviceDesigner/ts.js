@@ -320,6 +320,7 @@ var Main;
         }));
         Main._diagram.groupTemplateMap.add("API", Template.api());
         Main._diagram.groupTemplateMap.add("Operation", Template.operation());
+        Main._diagram.groupTemplateMap.add("Subscriber", Template.subscriber());
         Main._diagram.groupTemplateMap.add("InternalOperation", Template.internalOperation());
         Main._diagram.groupTemplateMap.add("Event", Template.event());
         Main._diagram.groupTemplateMap.add("Domain", Template.domain());
@@ -654,6 +655,23 @@ var Template;
                     var part = diagram.findPartForData(data);
                     part.location = diagram.toolManager.contextMenuTool.mouseDownPoint;
                     diagram.commitTransaction('new Operation');
+                    var txt = part.findObject("name");
+                    diagram.commandHandler.editTextBlock(txt);
+                }
+            }), gojs("ContextMenuButton", gojs(go.TextBlock, "New Subscriber"), {
+                click: function (e, obj) {
+                    var diagram = e.diagram;
+                    diagram.startTransaction('new Operation');
+                    var data = {
+                        category: "Subscriber",
+                        group: obj.part.data.key,
+                        name: "newSubscriber",
+                        isGroup: true
+                    };
+                    diagram.model.addNodeData(data);
+                    var part = diagram.findPartForData(data);
+                    part.location = diagram.toolManager.contextMenuTool.mouseDownPoint;
+                    diagram.commitTransaction('new Subscriber');
                     var txt = part.findObject("name");
                     diagram.commandHandler.editTextBlock(txt);
                 }
@@ -1153,4 +1171,38 @@ var Util;
     }
     Util.showAllParents = showAllParents;
 })(Util || (Util = {}));
+var Template;
+(function (Template) {
+    function subscriber() {
+        var gojs = go.GraphObject.make;
+        return gojs(go.Group, "Vertical", {
+            alignment: go.Spot.Center,
+            selectionChanged: function (part) { Util.changeSelectionNode(part.data); }
+        }, gojs(go.Panel, "Auto", {
+            width: 20,
+            height: 20,
+            toolTip: Template.toolTip(),
+            doubleClick: function (e, obj) { Template.showDetails(e, obj); },
+            contextMenu: gojs(go.Adornment, "Vertical", Template.contextMenuFocus(), Template.contextMenuHide(), Template.contextItemReferenceTo(), Template.contextItemReferenceFrom(), Template.contextMenuDetails())
+        }, gojs(go.Shape, "Square", {
+            fill: "#002776",
+            strokeWidth: 0,
+            portId: "",
+            cursor: "pointer",
+            fromLinkable: true,
+            toLinkable: true,
+            fromSpot: go.Spot.AllSides,
+            toSpot: go.Spot.AllSides,
+            alignment: go.Spot.Center
+        })), gojs(go.TextBlock, {
+            name: "name",
+            margin: 10,
+            wrap: go.TextBlock.WrapFit,
+            textAlign: "center",
+            stroke: "white",
+            editable: true
+        }, new go.Binding("text", "name").makeTwoWay()));
+    }
+    Template.subscriber = subscriber;
+})(Template || (Template = {}));
 //# sourceMappingURL=ts.js.map

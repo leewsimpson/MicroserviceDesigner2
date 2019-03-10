@@ -51,6 +51,27 @@ namespace Template
                                 diagram.commandHandler.editTextBlock(txt);
                             }
                         }),
+                    gojs("ContextMenuButton", gojs(go.TextBlock, "New Subscriber"),
+                        {
+                            click: function (e: go.InputEvent, obj: go.Part)
+                            {
+                                var diagram = e.diagram;
+                                diagram.startTransaction('new Operation');
+                                var data =
+                                {
+                                    category: "Subscriber",
+                                    group: obj.part.data.key,
+                                    name: "newSubscriber",
+                                    isGroup: true
+                                };
+                                diagram.model.addNodeData(data);
+                                var part = diagram.findPartForData(data);
+                                part.location = diagram.toolManager.contextMenuTool.mouseDownPoint;
+                                diagram.commitTransaction('new Subscriber');
+                                var txt = part.findObject("name") as go.TextBlock;
+                                diagram.commandHandler.editTextBlock(txt);
+                            }
+                        }),
                     contextMenuHide(),
                     contextMenuDetails()
                 )
