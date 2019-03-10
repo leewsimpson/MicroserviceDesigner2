@@ -601,7 +601,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Server\createDiagram.js" />
-    <Content Include="Server\generateImages.js" />
+    <Content Include="Server\image.js" />
     <Content Include="Server\node_modules\agent-base\index.js" />
     <Content Include="Server\node_modules\agent-base\patch-core.js" />
     <Content Include="Server\node_modules\agent-base\test\test.js" />
@@ -1202,7 +1202,6 @@
     <Content Include="Server\node_modules\ws\lib\websocket-server.js" />
     <Content Include="Server\node_modules\ws\lib\websocket.js" />
     <Content Include="Server\node_modules\yauzl\index.js" />
-    <Content Include="Server\start.js" />
     <Content Include="test cases.txt" />
     <Content Include="web.config" />
     <Content Include="test.json" />
