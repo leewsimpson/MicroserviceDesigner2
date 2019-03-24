@@ -8,12 +8,12 @@ http.createServer(async function (req, res)
 {
     res.writeHead(200, {'Content-Type': 'image/png'});    
 
-    let u = new URL('http://' + req.headers.host + req.url);
+    let u = new URL('https://' + req.headers.host + req.url);
     let project = u.searchParams.get('project');
     const i = await generateImage(project);
     res.end(i, 'binary');
-}).listen(1337, '127.0.0.1');
-console.log('Server running at http://127.0.0.1:1337/');
+}).listen(1337, 'https://vizzynodeserver2.azurewebsites.net');
+console.log('Server running at https://vizzynodeserver2.azurewebsites.net:1337/');
 
 
 async function generateImage(project)
