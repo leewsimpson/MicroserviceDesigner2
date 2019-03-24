@@ -12,7 +12,7 @@ http.createServer(async function (req, res)
     let project = u.searchParams.get('project');
     const i = await generateImage(project);
     res.end(i, 'binary');
-}).listen(1337, 'https://vizzynodeserver2.azurewebsites.net');
+}).listen(1337, 'https://localhost');
 console.log('Server running at https://vizzynodeserver2.azurewebsites.net:1337/');
 
 
