@@ -24,7 +24,7 @@
                 },
                 gojs(go.Shape, "Square",
                     {
-                        fill: "#002776",
+                        fill: "#0F6E00",
                         strokeWidth: 0,
                         portId: "",
                         cursor: "pointer", // the Shape is the port, not the whole Node

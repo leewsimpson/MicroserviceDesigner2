@@ -219,18 +219,20 @@ namespace Main
                 }
             });
 
-            console.log(_diagram.links.count);
-            _diagram.links.each((l) =>
-            {
-                if (l.fromNode && l.toNode)
-                {
-                    console.log(l.data);
-                    if (l.fromNode.data.key == key || l.toNode.data.key == key)
-                    {
-                        l.visible = true;
-                    }
-                }
-            });
+            includeLinksVisible();
+
+            //console.log(_diagram.links.count);
+            //_diagram.links.each((l) =>
+            //{
+            //    if (l.fromNode && l.toNode)
+            //    {
+            //        console.log(l.data);
+            //        if (l.fromNode.data.key == key || l.toNode.data.key == key)
+            //        {
+            //            l.visible = true;
+            //        }
+            //    }
+            //});
 
             _diagram.layout = Util.getcurrentLayout();;
             _diagram.commitTransaction();
@@ -247,8 +249,26 @@ namespace Main
                 node.visible = true;
             }
         });
+
+        includeLinksVisible();
+
         _diagram.layout = Util.getcurrentLayout();
         _diagram.commitTransaction();
+    }
+
+    function includeLinksVisible()
+    {
+        _diagram.links.each((l) =>
+        {
+            if (l.fromNode && l.toNode)
+            {
+                console.log(l.data);
+                if (l.fromNode.visible && l.toNode.visible)
+                {
+                    l.visible = true;
+                }
+            }
+        });
     }
 
     function getInnerNodes(dataString: string, key: number)
