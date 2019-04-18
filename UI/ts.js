@@ -237,7 +237,6 @@ var Main;
                 if (e.diagram.selection.first().category == "Operation")
                     e.diagram.currentTool.doCancel();
             },
-            layout: Util.getcurrentLayout()
         });
         Main._diagram.addModelChangedListener(function (evt) {
             if (evt.isTransactionFinished) {
@@ -249,6 +248,7 @@ var Main;
                 loadAPIs(_dataString);
                 loadSystems(_dataString);
                 loadEvents(_dataString);
+                loadViews();
                 updateDebug(_dataString);
                 bindMenu();
             }
@@ -329,6 +329,7 @@ var Main;
         Main._diagram.model = new go.GraphLinksModel();
         mapper.init();
         Details.init();
+        View.init();
     }
     Main.init = init;
     ;
@@ -376,6 +377,7 @@ var Main;
             }
         });
     }
+    Main.includeLinksVisible = includeLinksVisible;
     function getInnerNodes(dataString, key) {
         var data = JSON.parse(dataString).nodeDataArray.filter(function (node) {
             return node.group == key;
@@ -401,6 +403,18 @@ var Main;
         listItem.append(ul);
         return listItem;
     }
+    function createViewHTML(view) {
+        var listItem = $("<li class='dropdown-submenu'/>");
+        var a = $("<a class='dropdown-item dropdown-toggle' href='#' id='navbarDropdown' role='button' data-toggle='dropdown' aria-haspopup='true' aria-expanded='false'>" + view.name + "</a>").on("click", function () { View.View(view.name); });
+        var ul = $("<ul class='dropdown-menu' aria-labelledby='navbarDropdown'/>");
+        var li = $("<li/>");
+        var ia = $("<a class='dropdown-item' href='#'>Update</a>").on("click", function () { View.UpdateView(view.name); });
+        li.append(ia);
+        ul.append(li);
+        listItem.append(a);
+        listItem.append(ul);
+        return listItem;
+    }
     function loadAPIs(dataString) {
         var divList = $("#APIList");
         divList.empty();
@@ -411,6 +425,17 @@ var Main;
         });
     }
     ;
+    function loadViews() {
+        var divList = $("#ViewList");
+        divList.empty();
+        var a = $("<a class='dropdown-item' href='#'>Create View</a>").on("click", function () { View.CreateView(); });
+        divList.append(a);
+        View.Views.forEach(function (view) {
+            var v = createViewHTML(view);
+            divList.append(v);
+        });
+    }
+    Main.loadViews = loadViews;
     function loadSystems(dataString) {
         var divList = $("#SystemList");
         divList.empty();
@@ -1208,4 +1233,86 @@ var Util;
     }
     Util.showAllParents = showAllParents;
 })(Util || (Util = {}));
+var View;
+(function (View_1) {
+    class ViewModel {
+    }
+    View_1.ViewModel = ViewModel;
+    class ViewDataModel {
+    }
+    View_1.ViewDataModel = ViewDataModel;
+    View_1.Views = [];
+    var currentViewData = [];
+    var currentViewName;
+    var callback;
+    function init() {
+        $('#view-btn-ok').on('click', function () {
+            $('#viewModal').modal('hide');
+            callback($('#view-name').val());
+        });
+        $('#view-btn-cancel').on('click', function () {
+            $('#viewModal').modal('hide');
+        });
+    }
+    View_1.init = init;
+    function CreateView() {
+        $('#viewModal').modal();
+        callback = function (name) {
+            currentViewName = name;
+            currentViewData = [];
+            Main._diagram.nodes.each(function (n) {
+                if (n.visible) {
+                    currentViewData.push({
+                        key: n.data.key,
+                        location: n.location
+                    });
+                }
+            });
+            View_1.Views.push({ name: currentViewName, viewData: currentViewData });
+            Main.loadViews();
+        };
+    }
+    View_1.CreateView = CreateView;
+    function UpdateView(name) {
+        let view = View_1.Views.find(v => v.name == name);
+        if (view) {
+            currentViewData = [];
+            currentViewName = view.name;
+            Main._diagram.nodes.each(function (n) {
+                if (n.visible) {
+                    currentViewData.push({
+                        key: n.data.key,
+                        location: n.location
+                    });
+                }
+            });
+            Main.loadViews();
+        }
+        else {
+            console.log(name + " view not found");
+        }
+    }
+    View_1.UpdateView = UpdateView;
+    function View(name) {
+        console.log(View_1.Views);
+        let view = View_1.Views.find(v => v.name == name);
+        if (view) {
+            currentViewData = view.viewData;
+            currentViewName = view.name;
+            Util.showHideAll(Main._diagram, false, false);
+            Main._diagram.nodes.each(function (n) {
+                let v = currentViewData.find(d => d.key == n.data.key);
+                if (v) {
+                    n.visible = true;
+                    n.location = v.location;
+                }
+            });
+            Main.includeLinksVisible();
+        }
+        else {
+            console.log(name + " view not found");
+        }
+    }
+    View_1.View = View;
+})(View || (View = {}));
 //# sourceMappingURL=ts.js.map

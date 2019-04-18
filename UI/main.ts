@@ -54,7 +54,7 @@ namespace Main
                 contentAlignment: go.Spot.Center,
                 "undoManager.isEnabled": true,
                 click: function () { Util.changeSelectionNon() },
-                "draggingTool.isGridSnapEnabled": true,
+                "draggingTool.isGridSnapEnabled": true,                
                 //"commandHandler.canDeleteSelection": function ()
                 //{
                 //    $('#modal-btn-si').on('click', function ()
@@ -75,7 +75,7 @@ namespace Main
                     if (e.diagram.selection.first().category == "Operation")
                         e.diagram.currentTool.doCancel();
                 },
-                layout: Util.getcurrentLayout()
+               // layout: Util.getcurrentLayout()
             });
 
         _diagram.addModelChangedListener(function (evt) 
@@ -92,6 +92,7 @@ namespace Main
                 loadAPIs(_dataString);
                 loadSystems(_dataString);
                 loadEvents(_dataString);
+                loadViews();
                 updateDebug(_dataString);
                 bindMenu();
             }
@@ -193,6 +194,7 @@ namespace Main
         _diagram.model = new go.GraphLinksModel();
         mapper.init();
         Details.init();
+        View.init();
     };
 
     function getCategory(dataString: string, category: string)
@@ -256,7 +258,7 @@ namespace Main
         _diagram.commitTransaction();
     }
 
-    function includeLinksVisible()
+    export function includeLinksVisible()
     {
         _diagram.links.each((l) =>
         {
@@ -307,6 +309,25 @@ namespace Main
         return listItem;
     }
 
+    function createViewHTML(view: View.ViewModel)
+    {
+        var listItem = $("<li class='dropdown-submenu'/>");
+        var a = $("<a class='dropdown-item dropdown-toggle' href='#' id='navbarDropdown' role='button' data-toggle='dropdown' aria-haspopup='true' aria-expanded='false'>" + view.name + "</a>").on("click", function () { View.View(view.name) });
+        var ul = $("<ul class='dropdown-menu' aria-labelledby='navbarDropdown'/>");
+
+        //getInnerNodes(dataString, node.key).forEach(function (operationNode: data.nodeData)
+        //{
+            var li = $("<li/>");
+            var ia = $("<a class='dropdown-item' href='#'>Update</a>").on("click", function () { View.UpdateView(view.name) });
+            li.append(ia);
+            ul.append(li);
+        //});
+
+        listItem.append(a)
+        listItem.append(ul);
+        return listItem;
+    }
+
     function loadAPIs(dataString: string)
     {
         var divList = $("#APIList");
@@ -320,6 +341,21 @@ namespace Main
             divList.append(api);
         });
     };
+
+    export function loadViews()
+    {
+        var divList = $("#ViewList");
+        divList.empty();
+
+        var a = $("<a class='dropdown-item' href='#'>Create View</a>").on("click", function () { View.CreateView() });
+        divList.append(a);
+
+        View.Views.forEach(function (view: View.ViewModel) 
+        {
+            var v = createViewHTML(view);
+            divList.append(v);
+        });
+    }
 
     function loadSystems(dataString: string)
     {

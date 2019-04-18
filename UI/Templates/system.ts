@@ -44,6 +44,7 @@ namespace Template
                 )
             ),
             infoIcon()
+          //  new go.Binding("location", "key", View.GetLocation).makeTwoWay(View.SetLocation)
         );
     }
 }
