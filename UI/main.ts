@@ -236,7 +236,7 @@ namespace Main
             //    }
             //});
 
-            _diagram.layout = Util.getcurrentLayout();;
+            //_diagram.layout = Util.getcurrentLayout();
             _diagram.commitTransaction();
         }
     }
@@ -254,7 +254,7 @@ namespace Main
 
         includeLinksVisible();
 
-        _diagram.layout = Util.getcurrentLayout();
+       // _diagram.layout = Util.getcurrentLayout();
         _diagram.commitTransaction();
     }
 
@@ -264,7 +264,6 @@ namespace Main
         {
             if (l.fromNode && l.toNode)
             {
-                console.log(l.data);
                 if (l.fromNode.visible && l.toNode.visible)
                 {
                     l.visible = true;
@@ -315,13 +314,10 @@ namespace Main
         var a = $("<a class='dropdown-item dropdown-toggle' href='#' id='navbarDropdown' role='button' data-toggle='dropdown' aria-haspopup='true' aria-expanded='false'>" + view.name + "</a>").on("click", function () { View.View(view.name) });
         var ul = $("<ul class='dropdown-menu' aria-labelledby='navbarDropdown'/>");
 
-        //getInnerNodes(dataString, node.key).forEach(function (operationNode: data.nodeData)
-        //{
-            var li = $("<li/>");
-            var ia = $("<a class='dropdown-item' href='#'>Update</a>").on("click", function () { View.UpdateView(view.name) });
-            li.append(ia);
-            ul.append(li);
-        //});
+        ul.append($("<li/>").append($("<a class='dropdown-item' href='#'>Update</a>").on("click", function () { View.UpdateView(view.name) })));
+        ul.append($("<li/>").append($("<a class='dropdown-item' href='#'>Rename</a>").on("click", function () { View.RenameView(view.name) })));
+        ul.append($("<li/>").append($("<a class='dropdown-item' href='#'>Delete</a>").on("click", function () { View.DeleteView(view.name) })));
+        ul.append($("<li/>").append($("<a class='dropdown-item' href='#'>Get URL</a>").on("click", function () { View.GetURL(view.name) })));
 
         listItem.append(a)
         listItem.append(ul);

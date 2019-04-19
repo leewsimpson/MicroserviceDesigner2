@@ -351,8 +351,6 @@ var Main;
                 }
             });
             includeLinksVisible();
-            Main._diagram.layout = Util.getcurrentLayout();
-            ;
             Main._diagram.commitTransaction();
         }
     }
@@ -364,13 +362,11 @@ var Main;
             }
         });
         includeLinksVisible();
-        Main._diagram.layout = Util.getcurrentLayout();
         Main._diagram.commitTransaction();
     }
     function includeLinksVisible() {
         Main._diagram.links.each((l) => {
             if (l.fromNode && l.toNode) {
-                console.log(l.data);
                 if (l.fromNode.visible && l.toNode.visible) {
                     l.visible = true;
                 }
@@ -407,10 +403,10 @@ var Main;
         var listItem = $("<li class='dropdown-submenu'/>");
         var a = $("<a class='dropdown-item dropdown-toggle' href='#' id='navbarDropdown' role='button' data-toggle='dropdown' aria-haspopup='true' aria-expanded='false'>" + view.name + "</a>").on("click", function () { View.View(view.name); });
         var ul = $("<ul class='dropdown-menu' aria-labelledby='navbarDropdown'/>");
-        var li = $("<li/>");
-        var ia = $("<a class='dropdown-item' href='#'>Update</a>").on("click", function () { View.UpdateView(view.name); });
-        li.append(ia);
-        ul.append(li);
+        ul.append($("<li/>").append($("<a class='dropdown-item' href='#'>Update</a>").on("click", function () { View.UpdateView(view.name); })));
+        ul.append($("<li/>").append($("<a class='dropdown-item' href='#'>Rename</a>").on("click", function () { View.RenameView(view.name); })));
+        ul.append($("<li/>").append($("<a class='dropdown-item' href='#'>Delete</a>").on("click", function () { View.DeleteView(view.name); })));
+        ul.append($("<li/>").append($("<a class='dropdown-item' href='#'>Get URL</a>").on("click", function () { View.GetURL(view.name); })));
         listItem.append(a);
         listItem.append(ul);
         return listItem;
@@ -637,14 +633,16 @@ var Options;
         else {
             diagramDiv.style.right = "0";
         }
-        Main._diagram.layout = Util.getcurrentLayout();
     }
     Options.toggleViewMarkup = toggleViewMarkup;
     function toggleViewInfoIcons(show) {
         Options._projectOptions.showInfoIcons = show;
-        Main._diagram.layout = Util.getcurrentLayout();
     }
     Options.toggleViewInfoIcons = toggleViewInfoIcons;
+    function layout() {
+        Main._diagram.layout = Util.getcurrentLayout();
+    }
+    Options.layout = layout;
 })(Options || (Options = {}));
 var Template;
 (function (Template) {
@@ -731,7 +729,6 @@ var Template;
                         n.containingGroup.visible = true;
                     n.visible = true;
                 });
-                e.diagram.layout = Util.getcurrentLayout();
                 e.diagram.commitTransaction();
             }
         });
@@ -748,7 +745,6 @@ var Template;
                         n.containingGroup.visible = true;
                     n.visible = true;
                 });
-                e.diagram.layout = Util.getcurrentLayout();
                 e.diagram.commitTransaction();
             }
         });
@@ -1097,7 +1093,6 @@ var Util;
         myDiagram.startTransaction();
         myDiagram.nodes.each(function (node) { node.visible = visible && node.category != "Attribute"; });
         myDiagram.links.each(function (node) { node.visible = linksVisible; });
-        myDiagram.layout = Util.getcurrentLayout();
         myDiagram.commitTransaction();
         hideOtherNodes(myDiagram);
     }
@@ -1158,7 +1153,6 @@ var Util;
                 node.visible = true;
             }
         });
-        diagram.layout = Util.getcurrentLayout();
         diagram.commitTransaction();
     }
     Util.focusOnAPI = focusOnAPI;
@@ -1189,7 +1183,6 @@ var Util;
                 }
             }
         });
-        diagram.layout = Util.getcurrentLayout();
         diagram.commitTransaction();
     }
     Util.focus = focus;
@@ -1256,7 +1249,9 @@ var View;
     }
     View_1.init = init;
     function CreateView() {
+        $('#view-name').val("");
         $('#viewModal').modal();
+        $('#view-name').focus();
         callback = function (name) {
             currentViewName = name;
             currentViewData = [];
@@ -1286,13 +1281,35 @@ var View;
                     });
                 }
             });
-            Main.loadViews();
+            view.viewData = currentViewData;
         }
         else {
             console.log(name + " view not found");
         }
     }
     View_1.UpdateView = UpdateView;
+    function RenameView(name) {
+        $('#view-name').val(name);
+        $('#viewModal').modal();
+        $('#view-name').focus();
+        callback = function (newName) {
+            let view = View_1.Views.find(v => v.name == name);
+            if (view) {
+                view.name = newName;
+                currentViewName = view.name;
+                Main.loadViews();
+            }
+        };
+    }
+    View_1.RenameView = RenameView;
+    function DeleteView(name) {
+        View_1.Views = View_1.Views.filter(v => v.name != name);
+        Main.loadViews();
+    }
+    View_1.DeleteView = DeleteView;
+    function GetURL(name) {
+    }
+    View_1.GetURL = GetURL;
     function View(name) {
         console.log(View_1.Views);
         let view = View_1.Views.find(v => v.name == name);

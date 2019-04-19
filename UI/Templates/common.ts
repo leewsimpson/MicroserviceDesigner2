@@ -16,7 +16,7 @@
 
                     n.visible = true;
                 });
-                e.diagram.layout = Util.getcurrentLayout();
+               //e.diagram.layout = Util.getcurrentLayout();
                 e.diagram.commitTransaction();
             }
         })
@@ -37,7 +37,7 @@
 
                     n.visible = true;
                 });
-                e.diagram.layout = Util.getcurrentLayout();
+               // e.diagram.layout = Util.getcurrentLayout();
                 e.diagram.commitTransaction();
             }
         });

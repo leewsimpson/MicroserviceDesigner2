@@ -33,7 +33,9 @@
 
     export function CreateView()
     {
+        $('#view-name').val("");
         $('#viewModal').modal();
+        $('#view-name').focus();
         callback = function (name: string)
         {
             currentViewName = name;
@@ -74,7 +76,7 @@
                         })
                 }
             });
-            Main.loadViews();
+            view.viewData = currentViewData;
         }
         else
         {
@@ -82,6 +84,34 @@
         }
     }
 
+    export function RenameView(name: string)
+    {
+        $('#view-name').val(name);
+        $('#viewModal').modal();
+        $('#view-name').focus();
+        callback = function (newName: string)
+        {
+            let view = Views.find(v => v.name == name);
+            if (view)
+            {
+                view.name = newName;
+                currentViewName = view.name;
+
+                Main.loadViews();
+            }
+        }
+    }
+
+    export function DeleteView(name: string)
+    {
+        Views = Views.filter(v => v.name != name);
+        Main.loadViews();
+    }
+
+    export function GetURL(name: string)
+    {
+
+    }
     export function View(name:string)
     {
         console.log(Views);

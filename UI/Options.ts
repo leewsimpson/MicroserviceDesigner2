@@ -21,12 +21,17 @@
         {
             diagramDiv.style.right = "0";
         }
-        Main._diagram.layout = Util.getcurrentLayout();
+       // Main._diagram.layout = Util.getcurrentLayout();
     }
 
     export function toggleViewInfoIcons(show: boolean)
     {
         _projectOptions.showInfoIcons = show;
+       // Main._diagram.layout = Util.getcurrentLayout();
+    }
+
+    export function layout()
+    {
         Main._diagram.layout = Util.getcurrentLayout();
     }
 }
