@@ -27,6 +27,7 @@ namespace Main
         const urlParams = new URLSearchParams(window.location.search);
         _projectName = urlParams.get('project');
 
+
         if (urlParams.get('debugMode'))
         {
             _isDebugMode = true;
@@ -50,6 +51,11 @@ namespace Main
                     // add height for horizontal scrollbar
                     //dia.div.style.height = (dia.documentBounds.height + 24) + "px";
                     //dia.div.style.width = (dia.documentBounds.width + 24) + "px";
+                    var view = urlParams.get('view');
+                    if (view)
+                    {
+                        View.View(view);
+                    }
                 },
                 contentAlignment: go.Spot.Center,
                 "undoManager.isEnabled": true,
@@ -346,6 +352,7 @@ namespace Main
         var a = $("<a class='dropdown-item' href='#'>Create View</a>").on("click", function () { View.CreateView() });
         divList.append(a);
 
+
         View.Views.forEach(function (view: View.ViewModel) 
         {
             var v = createViewHTML(view);
@@ -392,7 +399,7 @@ namespace Main
     {
         let data = _diagram.model.toJson();
         let dataObject = JSON.parse(data);
-        dataObject.mainMarkDown = _mainMarkDown;
+        dataObject.views = View.Views;
 
         Util.saveData(JSON.stringify(dataObject), _projectName);
         unsavedChanges(false);
@@ -418,11 +425,16 @@ namespace Main
             });
 
             _diagram.model = model;
-            _mainMarkDown = JSON.parse(data.result).mainMarkDown;
-            if (!_mainMarkDown) _mainMarkDown = '';
+            View.Views = JSON.parse(data.result).views;
+            if (!View.Views)
+            {
+                View.Views = [];
+            }
+            //_mainMarkDown = 
+            //if (!_mainMarkDown) _mainMarkDown = '';
             _dataString = JSON.stringify(model);
             Util.hideOtherNodes(_diagram);
-            Util.changeSelectionNon()
+            Util.changeSelectionNon();
         }
         unsavedChanges(false);
     }

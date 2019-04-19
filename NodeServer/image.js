@@ -6,29 +6,31 @@ const URL = require('url').URL;
 
 http.createServer(async function (req, res) 
 {
-    res.writeHead(200, {'Content-Type': 'image/png'});    
+    res.writeHead(200, { 'Content-Type': 'image/png' });
 
-    let u = new URL('https://' + req.headers.host + req.url);
+    let u = new URL('http://' + req.headers.host + req.url);
     let project = u.searchParams.get('project');
-    const i = await generateImage(project);
+    let view = u.searchParams.get('view');
+    const i = await generateImage(project, view);
     res.end(i, 'binary');
-}).listen(1337, 'https://localhost');
+}).listen(1337);//, 'http://localhost');
+
 console.log('Server running at https://vizzynodeserver2.azurewebsites.net:1337/');
 
 
-async function generateImage(project)
+async function generateImage(project, view)
 {
     const jsonString = await load(project);
-    const browser = await puppeteer.launch(); //{devtools: true}
+    const browser = await puppeteer.launch();//{devtools: true})
     const page = await browser.newPage();
 
     await page.addScriptTag({url: 'https://cdnjs.cloudflare.com/ajax/libs/gojs/1.8.7/go.js'});
-    await page.addScriptTag({url: "http://vizzy-green.azurewebsites.net/ts.js"});
+    await page.addScriptTag({path: "./ts.js"});
     await page.addScriptTag({path: "./createDiagram.js"});
     await page.setContent('<div id="myDiagramDiv" style="border: solid 1px black; width:400px; height:400px"></div>');
 
-    const imageData = await page.evaluate((jsonString) => {
-        var myDiagram = createDiagram();
+    const imageData = await page.evaluate((jsonString, view) => {
+        var myDiagram = createDiagram(view);
 
         myDiagram.model = go.Model.fromJson(jsonString);
 
@@ -37,7 +39,7 @@ async function generateImage(project)
             scale:5,
             maxSize: new go.Size(Infinity, Infinity)
         });
-    },jsonString);
+    },jsonString, view);
 
     const { buffer } = parseDataUrl(imageData);
     fs.writeFileSync('gojs-screenshot.png', buffer, 'base64');

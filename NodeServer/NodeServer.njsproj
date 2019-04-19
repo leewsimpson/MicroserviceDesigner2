@@ -1645,6 +1645,7 @@
     <Compile Include="node_modules\ws\lib\websocket-server.js" />
     <Compile Include="node_modules\ws\lib\websocket.js" />
     <Compile Include="node_modules\yauzl\index.js" />
+    <Compile Include="ts.js" />
     <Content Include="node_modules\.bin\extract-zip" />
     <Content Include="node_modules\.bin\extract-zip.cmd" />
     <Content Include="node_modules\.bin\mime" />

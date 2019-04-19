@@ -128,7 +128,7 @@
                 if (v)
                 {
                     n.visible = true;
-                    n.location = v.location;
+                    n.location = new go.Point(v.location.x, v.location.y);
                 }
             });
             Main.includeLinksVisible();
