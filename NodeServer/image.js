@@ -3,6 +3,7 @@ const fs = require('fs');
 const http = require('http');
 const request = require('request-promise-native');
 const URL = require('url').URL;
+var port = process.env.PORT || 1337;
 
 http.createServer(async function (req, res) 
 {
@@ -11,9 +12,10 @@ http.createServer(async function (req, res)
     let u = new URL('http://' + req.headers.host + req.url);
     let project = u.searchParams.get('project');
     let view = u.searchParams.get('view');
+
     const i = await generateImage(project, view);
     res.end(i, 'binary');
-}).listen(1337);//, 'http://localhost');
+}).listen(port);
 
 console.log('Server running at https://vizzynodeserver2.azurewebsites.net:1337/');
 
