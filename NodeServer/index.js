@@ -5,6 +5,10 @@ const request = require('request-promise-native');
 const URL = require('url').URL;
 var port = process.env.PORT || 1337;
 
+const appInsights = require("applicationinsights");
+appInsights.setup("ef63270b-0b56-4a65-8ce7-f534d40a646a");
+appInsights.start();
+
 http.createServer(async function (req, res) 
 {
     res.writeHead(200, { 'Content-Type': 'image/png' });
