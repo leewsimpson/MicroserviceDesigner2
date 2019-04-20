@@ -1,6 +1,6 @@
 const puppeteer = require('puppeteer');
 const fs = require('fs');
-const http = require('https');
+const http = require('http');
 const request = require('request-promise-native');
 const URL = require('url').URL;
 var port = process.env.PORT || 1337;
@@ -9,7 +9,7 @@ http.createServer(async function (req, res)
 {
     res.writeHead(200, { 'Content-Type': 'image/png' });
 
-    let u = new URL('https://' + req.headers.host + req.url);
+    let u = new URL('http://' + req.headers.host + req.url);
     let project = u.searchParams.get('project');
     let view = u.searchParams.get('view');
     console.log(u);

@@ -11,7 +11,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>ac7ce6e0-3c9b-441e-9b4f-f0f013deb518</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>image.js</StartupFile>
+    <StartupFile>index.js</StartupFile>
     <StartWebBrowser>False</StartWebBrowser>
     <SearchPath>
     </SearchPath>
@@ -30,7 +30,7 @@
   <ItemGroup>
     <Compile Include="app.js" />
     <Compile Include="createDiagram.js" />
-    <Compile Include="image.js" />
+    <Compile Include="index.js" />
     <Compile Include="node_modules\agent-base\index.js" />
     <Compile Include="node_modules\agent-base\patch-core.js" />
     <Compile Include="node_modules\agent-base\test\test.js" />
@@ -2297,6 +2297,7 @@
     <Content Include="node_modules\yauzl\README.md" />
     <Content Include="package.json" />
     <Content Include="README.md" />
+    <Content Include="web.config" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="node_modules\" />
