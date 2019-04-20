@@ -114,14 +114,13 @@
     }
     export function View(name:string)
     {
-        console.log(Views);
         let view = Views.find(v => v.name == name);
         if (view)
         {
             currentViewData = view.viewData;
             currentViewName = view.name;
 
-            Util.showHideAll(Main._diagram, false, false);
+            //Util.showHideAll(Main._diagram, false, false);
             Main._diagram.nodes.each(function (n: go.Node) 
             {
                 let v = currentViewData.find(d => d.key == n.data.key);
@@ -130,8 +129,12 @@
                     n.visible = true;
                     n.location = new go.Point(v.location.x, v.location.y);
                 }
+                else
+                {
+                    n.visible = false;
+                }
             });
-            Main.includeLinksVisible();
+            //Main.includeLinksVisible();
         }
         else
         {

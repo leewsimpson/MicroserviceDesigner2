@@ -1316,20 +1316,20 @@ var View;
     }
     View_1.GetURL = GetURL;
     function View(name) {
-        console.log(View_1.Views);
         let view = View_1.Views.find(v => v.name == name);
         if (view) {
             currentViewData = view.viewData;
             currentViewName = view.name;
-            Util.showHideAll(Main._diagram, false, false);
             Main._diagram.nodes.each(function (n) {
                 let v = currentViewData.find(d => d.key == n.data.key);
                 if (v) {
                     n.visible = true;
                     n.location = new go.Point(v.location.x, v.location.y);
                 }
+                else {
+                    n.visible = false;
+                }
             });
-            Main.includeLinksVisible();
         }
         else {
             console.log(name + " view not found");

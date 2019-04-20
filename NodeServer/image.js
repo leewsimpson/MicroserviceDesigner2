@@ -26,13 +26,26 @@ async function generateImage(project, view)
 
     await page.addScriptTag({url: 'https://cdnjs.cloudflare.com/ajax/libs/gojs/1.8.7/go.js'});
     await page.addScriptTag({path: "./ts.js"});
-    await page.addScriptTag({path: "./createDiagram.js"});
-    await page.setContent('<div id="myDiagramDiv" style="border: solid 1px black; width:400px; height:400px"></div>');
+    await page.addScriptTag({ path: "./createDiagram.js" });
+    await page.setContent('<body style="width:100%;height:100%;padding:0;margin:0;overflow:hidden;"><div id="myDiagramDiv" style="background-color:white;position:absolute; width:100%;height:calc(100% - 56px);overflow:hidden;"></div></body>');
+    
 
-    const imageData = await page.evaluate((jsonString, view) => {
+    const imageData = await page.evaluate((jsonString, view) => 
+    {
+        View.Views = JSON.parse(jsonString).views;
+
+        if (!View.Views)
+        {
+            View.Views = [];
+        }
         var myDiagram = createDiagram(view);
+        Main._diagram = myDiagram;
 
         myDiagram.model = go.Model.fromJson(jsonString);
+        if (view)
+        {
+            View.View(view);
+        }
 
         return myDiagram.makeImageData(
         {
@@ -43,7 +56,7 @@ async function generateImage(project, view)
 
     const { buffer } = parseDataUrl(imageData);
     fs.writeFileSync('gojs-screenshot.png', buffer, 'base64');
-    await browser.close();
+    await browser.close();    
     return buffer;
 };
 

@@ -686,8 +686,6 @@
   <ItemGroup>
     <Content Include="test cases.txt" />
     <Content Include="web.config" />
-    <Content Include="test.json" />
-    <Content Include="test2.json" />
     <Content Include="lib\bootstrap-rtl\css\bootstrap-flipped.css.map" />
     <Content Include="lib\bootstrap-rtl\css\bootstrap-rtl.css.map" />
     <Content Include="lib\bootstrap-submenu\css\bootstrap-submenu.min.css.map" />
