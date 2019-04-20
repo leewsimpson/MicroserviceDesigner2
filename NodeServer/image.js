@@ -1,6 +1,6 @@
 const puppeteer = require('puppeteer');
 const fs = require('fs');
-const http = require('http');
+const http = require('https');
 const request = require('request-promise-native');
 const URL = require('url').URL;
 var port = process.env.PORT || 1337;
@@ -9,15 +9,16 @@ http.createServer(async function (req, res)
 {
     res.writeHead(200, { 'Content-Type': 'image/png' });
 
-    let u = new URL('http://' + req.headers.host + req.url);
+    let u = new URL('https://' + req.headers.host + req.url);
     let project = u.searchParams.get('project');
     let view = u.searchParams.get('view');
+    console.log(u);
 
     const i = await generateImage(project, view);
     res.end(i, 'binary');
 }).listen(port);
 
-console.log('Server running at https://vizzynodeserver2.azurewebsites.net:1337/');
+console.log('Server running port ' + port);
 
 
 async function generateImage(project, view)
