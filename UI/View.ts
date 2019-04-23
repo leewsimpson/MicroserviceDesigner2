@@ -134,7 +134,7 @@
                     n.visible = false;
                 }
             });
-            //Main.includeLinksVisible();
+            Main.includeLinksVisible();
         }
         else
         {
