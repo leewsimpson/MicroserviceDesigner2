@@ -1,6 +1,0 @@
-Installing NodeServer
-
-Create simple web app
-change version using app settings to WEBSITE_NODE_DEFAULT_VERSION 8.9.0
-Kudu - navigate to wwwroot
-run npm install (there is probably a way to automate this)

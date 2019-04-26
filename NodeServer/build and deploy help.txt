@@ -1,0 +1,4 @@
+get it working as an azure function.
+az start
+
+edit 

@@ -1,0 +1,13 @@
+get it working as an azure function
+-az start
+
+edit dockerfile and build it
+-docker build xxx
+then run it 
+-docker run ??
+get it working locally first in docker...
+
+publish it to docker hub
+-docker publish ?
+
+create or update azure function.

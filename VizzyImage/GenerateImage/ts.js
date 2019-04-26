@@ -734,7 +734,6 @@ var Template;
                         n.containingGroup.visible = true;
                     n.visible = true;
                 });
-                Main.includeLinksVisible();
                 e.diagram.commitTransaction();
             }
         });
@@ -751,7 +750,6 @@ var Template;
                         n.containingGroup.visible = true;
                     n.visible = true;
                 });
-                Main.includeLinksVisible();
                 e.diagram.commitTransaction();
             }
         });
