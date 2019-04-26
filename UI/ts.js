@@ -751,7 +751,6 @@ var Template;
                         n.containingGroup.visible = true;
                     n.visible = true;
                 });
-                Main.includeLinksVisible();
                 e.diagram.commitTransaction();
             }
         });
@@ -1332,6 +1331,7 @@ var View;
                     n.visible = false;
                 }
             });
+            Main.includeLinksVisible();
         }
         else {
             console.log(name + " view not found");
