@@ -1,0 +1,77 @@
+<html>
+<head>
+    <style></style>
+    <script src="gojs/go.js"></script>    
+    <script src="ts.js"></script>
+    <script src="createDiagram.js"></script>
+    <script src="jquery/jquery.js"></script>
+</head>
+<body style="width:100%;height:100%;padding:0;margin:0;overflow:hidden;">
+    <div id="myDiagramDiv" style="background-color:white;position:absolute; width:100%;height:calc(100% - 56px);overflow:hidden;">
+    </div>
+
+    <script>
+    (async () => {await generateImage('test', '');})();
+    
+    async function generateImage(project, view)
+    {
+        const jsonString = await getData(project);
+        console.log(jsonString);
+
+        View.Views = jsonString.views;
+
+        if (!View.Views)
+        {
+            View.Views = [];
+        }
+        var myDiagram = createDiagram(view);
+        Main._diagram = myDiagram;
+
+        myDiagram.model = go.Model.fromJson(jsonString);
+        if (view)
+        {
+            View.View(view);
+        }
+
+        console.log('trying to render..');
+    }
+
+    const parseDataUrl = (dataUrl) => 
+    {
+        const matches = dataUrl.match(/^data:(.+);base64,(.+)$/);
+        if (matches.length !== 3) {
+        throw new Error('Could not parse data URL.');
+        }
+        return { mime: matches[1], buffer: Buffer.from(matches[2], 'base64') };
+    };
+
+    async function load(project)
+    {
+        let list = await request("https://vizzyapi.azurewebsites.net/api/data/" + project, { json: true });//, (err, res, list) => 
+        let id = list[0];
+        return request("https://vizzyapi.azurewebsites.net/api/data/" + project + "/" + id, { json: true });//, (err, res, json) => 
+    }
+
+    async function getData(project)
+    {
+        const list = await $.ajax(
+        {
+            url: "https://vizzyapi.azurewebsites.net/api/data/" + project,
+        });
+
+        if(list.length==0)
+            return null;
+
+        const id = list[0];
+
+        const result = await $.ajax(
+            {
+                url: "https://vizzyapi.azurewebsites.net/api/data/" + project + "/" + id,
+            });
+           
+        return { result };
+
+    }
+    </script>
+</body>
+</html>

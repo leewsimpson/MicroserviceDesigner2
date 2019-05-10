@@ -4,6 +4,7 @@
     {
         showMarkDown?: boolean = true;
         showInfoIcons?: boolean = true;
+        autoLayout?: boolean = true;
     }
 
     export let _projectOptions = new Options.Project();
@@ -21,17 +22,18 @@
         {
             diagramDiv.style.right = "0";
         }
-       // Main._diagram.layout = Util.getcurrentLayout();
     }
 
     export function toggleViewInfoIcons(show: boolean)
     {
         _projectOptions.showInfoIcons = show;
-       // Main._diagram.layout = Util.getcurrentLayout();
+        Main._diagram.layout = Util.getcurrentLayout();
     }
 
-    export function layout()
+    export function toggleLayout(autolayout: boolean)
     {
-        Main._diagram.layout = Util.getcurrentLayout();
+        _projectOptions.autoLayout = autolayout;
+        if (autolayout)
+            Main._diagram.layout = Util.getcurrentLayout();
     }
 }

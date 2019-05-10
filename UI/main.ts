@@ -60,7 +60,7 @@ namespace Main
                 contentAlignment: go.Spot.Center,
                 "undoManager.isEnabled": true,
                 click: function () { Util.changeSelectionNon() },
-                "draggingTool.isGridSnapEnabled": true,                
+                "draggingTool.isGridSnapEnabled": true,
                 //"commandHandler.canDeleteSelection": function ()
                 //{
                 //    $('#modal-btn-si').on('click', function ()
@@ -80,8 +80,8 @@ namespace Main
                 {
                     if (e.diagram.selection.first().category == "Operation")
                         e.diagram.currentTool.doCancel();
-                },
-               // layout: Util.getcurrentLayout()
+                }
+                //Util.autoLayout();
             });
 
         _diagram.addModelChangedListener(function (evt) 
@@ -227,7 +227,7 @@ namespace Main
                 }
             });
 
-            includeLinksVisible();
+            includeOnlyLinksVisible();
 
             //console.log(_diagram.links.count);
             //_diagram.links.each((l) =>
@@ -242,7 +242,7 @@ namespace Main
             //    }
             //});
 
-            //_diagram.layout = Util.getcurrentLayout();
+            Util.autoLayout();
             _diagram.commitTransaction();
         }
     }
@@ -258,22 +258,35 @@ namespace Main
             }
         });
 
-        includeLinksVisible();
+        includeOnlyLinksVisible();
 
-       // _diagram.layout = Util.getcurrentLayout();
+        Util.autoLayout();
         _diagram.commitTransaction();
     }
 
-    export function includeLinksVisible()
+    export function includeOnlyLinksVisible()
     {
         _diagram.links.each((l) =>
         {
             if (l.fromNode && l.toNode)
             {
+                //console.log(l.fromNode);
+                //console.log(l.toNode);
+                //console.log('---');
+
                 if (l.fromNode.visible && l.toNode.visible)
                 {
                     l.visible = true;
                 }
+                else
+                {
+                    l.visible = false;
+                }
+            }
+            else
+            {
+                console.log("something is wrong with this link ");
+                console.log(l);
             }
         });
     }
@@ -415,6 +428,12 @@ namespace Main
         }
         else
         {
+            let f = JSON.parse(data.result);
+            f.linkDataArray.forEach((n: any) =>
+            {
+                console.log(n);
+            });
+
             let model = go.Model.fromJson(data.result);
 
             model.nodeDataArray.forEach((n: data.nodeData) =>

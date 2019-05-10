@@ -4,6 +4,14 @@ namespace Util
     export function changeSelectionNode(s: data.nodeData) {}
     export function changeSelectionLink(s: data.linkData) {}
 
+    export function autoLayout()
+    {
+        if (Options._projectOptions.autoLayout)
+        {
+            Main._diagram.layout = Util.getcurrentLayout();
+        }
+    }
+
     export function getcurrentLayout():any
     {
         return go.GraphObject.make(go.LayeredDigraphLayout,
@@ -19,6 +27,7 @@ namespace Util
         myDiagram.nodes.each(function(node: go.Node) {node.visible = visible && node.category!="Attribute";});
         myDiagram.links.each(function(node: go.Link) {node.visible = linksVisible;});
        // myDiagram.layout = Util.getcurrentLayout();
+        Util.autoLayout();
         myDiagram.commitTransaction();
         hideOtherNodes(myDiagram);
     }
@@ -103,6 +112,7 @@ namespace Util
         });
 
        // diagram.layout = Util.getcurrentLayout();
+        Util.autoLayout();
         diagram.commitTransaction();    
     }
 
@@ -142,6 +152,7 @@ namespace Util
         });
 
        // diagram.layout = Util.getcurrentLayout();
+        Util.autoLayout();
         diagram.commitTransaction();    
     }
 
@@ -164,6 +175,7 @@ namespace Util
             });
            
         return { result };
+
     }
 
     export function saveData(d:string, project:string)

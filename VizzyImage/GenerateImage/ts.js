@@ -240,7 +240,7 @@ var Main;
             mouseDrop: function (e) {
                 if (e.diagram.selection.first().category == "Operation")
                     e.diagram.currentTool.doCancel();
-            },
+            }
         });
         Main._diagram.addModelChangedListener(function (evt) {
             if (evt.isTransactionFinished) {
@@ -354,7 +354,8 @@ var Main;
                     node.visible = true;
                 }
             });
-            includeLinksVisible();
+            includeOnlyLinksVisible();
+            Util.autoLayout();
             Main._diagram.commitTransaction();
         }
     }
@@ -365,19 +366,23 @@ var Main;
                 node.visible = true;
             }
         });
-        includeLinksVisible();
+        includeOnlyLinksVisible();
+        Util.autoLayout();
         Main._diagram.commitTransaction();
     }
-    function includeLinksVisible() {
+    function includeOnlyLinksVisible() {
         Main._diagram.links.each((l) => {
             if (l.fromNode && l.toNode) {
                 if (l.fromNode.visible && l.toNode.visible) {
                     l.visible = true;
                 }
+                else {
+                    l.visible = false;
+                }
             }
         });
     }
-    Main.includeLinksVisible = includeLinksVisible;
+    Main.includeOnlyLinksVisible = includeOnlyLinksVisible;
     function getInnerNodes(dataString, key) {
         var data = JSON.parse(dataString).nodeDataArray.filter(function (node) {
             return node.group == key;
@@ -625,6 +630,7 @@ var Options;
         constructor() {
             this.showMarkDown = true;
             this.showInfoIcons = true;
+            this.autoLayout = true;
         }
     }
     Options.Project = Project;
@@ -642,12 +648,15 @@ var Options;
     Options.toggleViewMarkup = toggleViewMarkup;
     function toggleViewInfoIcons(show) {
         Options._projectOptions.showInfoIcons = show;
-    }
-    Options.toggleViewInfoIcons = toggleViewInfoIcons;
-    function layout() {
         Main._diagram.layout = Util.getcurrentLayout();
     }
-    Options.layout = layout;
+    Options.toggleViewInfoIcons = toggleViewInfoIcons;
+    function toggleLayout(autolayout) {
+        Options._projectOptions.autoLayout = autolayout;
+        if (autolayout)
+            Main._diagram.layout = Util.getcurrentLayout();
+    }
+    Options.toggleLayout = toggleLayout;
 })(Options || (Options = {}));
 var Template;
 (function (Template) {
@@ -734,6 +743,8 @@ var Template;
                         n.containingGroup.visible = true;
                     n.visible = true;
                 });
+                Util.autoLayout();
+                Main.includeOnlyLinksVisible();
                 e.diagram.commitTransaction();
             }
         });
@@ -750,6 +761,8 @@ var Template;
                         n.containingGroup.visible = true;
                     n.visible = true;
                 });
+                Main.includeOnlyLinksVisible();
+                Util.autoLayout();
                 e.diagram.commitTransaction();
             }
         });
@@ -1087,6 +1100,12 @@ var Util;
     Util.changeSelectionNode = changeSelectionNode;
     function changeSelectionLink(s) { }
     Util.changeSelectionLink = changeSelectionLink;
+    function autoLayout() {
+        if (Options._projectOptions.autoLayout) {
+            Main._diagram.layout = Util.getcurrentLayout();
+        }
+    }
+    Util.autoLayout = autoLayout;
     function getcurrentLayout() {
         return go.GraphObject.make(go.LayeredDigraphLayout, {
             setsPortSpots: false,
@@ -1098,6 +1117,7 @@ var Util;
         myDiagram.startTransaction();
         myDiagram.nodes.each(function (node) { node.visible = visible && node.category != "Attribute"; });
         myDiagram.links.each(function (node) { node.visible = linksVisible; });
+        Util.autoLayout();
         myDiagram.commitTransaction();
         hideOtherNodes(myDiagram);
     }
@@ -1158,6 +1178,7 @@ var Util;
                 node.visible = true;
             }
         });
+        Util.autoLayout();
         diagram.commitTransaction();
     }
     Util.focusOnAPI = focusOnAPI;
@@ -1188,6 +1209,7 @@ var Util;
                 }
             }
         });
+        Util.autoLayout();
         diagram.commitTransaction();
     }
     Util.focus = focus;
@@ -1264,7 +1286,8 @@ var View;
                 if (n.visible) {
                     currentViewData.push({
                         key: n.data.key,
-                        location: n.location
+                        location: n.location,
+                        size: n.desiredSize
                     });
                 }
             });
@@ -1282,7 +1305,8 @@ var View;
                 if (n.visible) {
                     currentViewData.push({
                         key: n.data.key,
-                        location: n.location
+                        location: n.location,
+                        size: n.desiredSize
                     });
                 }
             });
@@ -1322,14 +1346,19 @@ var View;
             currentViewName = view.name;
             Main._diagram.nodes.each(function (n) {
                 let v = currentViewData.find(d => d.key == n.data.key);
+                console.log(v);
                 if (v) {
                     n.visible = true;
                     n.location = new go.Point(v.location.x, v.location.y);
+                    if (v.size && v.size.width && v.size.height) {
+                        n.desiredSize = new go.Size(v.size.width, v.size.height);
+                    }
                 }
                 else {
                     n.visible = false;
                 }
             });
+            Main.includeOnlyLinksVisible();
         }
         else {
             console.log(name + " view not found");

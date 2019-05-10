@@ -9,7 +9,8 @@
     export class ViewDataModel
     {
         key: number;
-        location: go.Point
+        location: go.Point;
+        size: go.Size;
     }
 
     export var Views: ViewModel[] = [];
@@ -47,7 +48,8 @@
                     currentViewData.push(
                         {
                             key: n.data.key,
-                            location: n.location
+                            location: n.location,
+                            size: n.desiredSize
                         })
                 }
             });
@@ -72,7 +74,8 @@
                     currentViewData.push(
                         {
                             key: n.data.key,
-                            location: n.location
+                            location: n.location,
+                            size: n.desiredSize
                         })
                 }
             });
@@ -122,19 +125,24 @@
 
             //Util.showHideAll(Main._diagram, false, false);
             Main._diagram.nodes.each(function (n: go.Node) 
-            {
+            {                
                 let v = currentViewData.find(d => d.key == n.data.key);
+                console.log(v);
                 if (v)
                 {
                     n.visible = true;
                     n.location = new go.Point(v.location.x, v.location.y);
+                    if (v.size && v.size.width && v.size.height)
+                    {
+                        n.desiredSize = new go.Size(v.size.width, v.size.height);
+                    }
                 }
                 else
                 {
                     n.visible = false;
                 }
             });
-            Main.includeLinksVisible();
+            Main.includeOnlyLinksVisible();
         }
         else
         {

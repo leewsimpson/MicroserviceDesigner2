@@ -16,8 +16,8 @@
 
                     n.visible = true;
                 });
-               //e.diagram.layout = Util.getcurrentLayout();
-                Main.includeLinksVisible();
+                Util.autoLayout();
+                Main.includeOnlyLinksVisible();
                 e.diagram.commitTransaction();
             }
         })
@@ -38,8 +38,8 @@
 
                     n.visible = true;
                 });
-                Main.includeLinksVisible();
-               // e.diagram.layout = Util.getcurrentLayout();
+                Main.includeOnlyLinksVisible();
+                Util.autoLayout();
                 e.diagram.commitTransaction();
             }
         });
@@ -54,6 +54,7 @@
                 var node = e.diagram.findNodeForKey(obj.part.data.key);
                 e.diagram.startTransaction();
                 node.visible = false;
+                Main.includeOnlyLinksVisible();
                 e.diagram.commitTransaction();
             }
         });

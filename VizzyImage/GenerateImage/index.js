@@ -47,9 +47,10 @@ module.exports = async function (context, req)
         const page = await browser.newPage();
         console.log('new page');
 
-        await page.addScriptTag({url: 'https://cdnjs.cloudflare.com/ajax/libs/gojs/1.8.7/go.js'});
+        //await page.addScriptTag({url: 'https://cdnjs.cloudflare.com/ajax/libs/gojs/1.8.7/go-debug.js'});
         // await page.addScriptTag({path: "/home/site/wwwroot/GenerateImage/ts.js"});
         // await page.addScriptTag({ path: "/home/site/wwwroot/GenerateImage/createDiagram.js" });
+        await page.addScriptTag({path: "./gojs/go.js"});
         await page.addScriptTag({path: "./GenerateImage/ts.js"});
         await page.addScriptTag({ path: "./GenerateImage/createDiagram.js" });        
         await page.setContent('<body style="width:100%;height:100%;padding:0;margin:0;overflow:hidden;"><div id="myDiagramDiv" style="background-color:white;position:absolute; width:100%;height:calc(100% - 56px);overflow:hidden;"></div></body>');
@@ -74,13 +75,13 @@ module.exports = async function (context, req)
             }
 
             console.log('trying to render..');
-            debugger;
+            //debugger;
             return null;
-            return myDiagram.makeImageData(
-             {
-                 scale:5,
-                 maxSize: new go.Size(Infinity, Infinity)
-             });
+            // return myDiagram.makeImageData(
+            //  {
+            //      scale:5,
+            //      maxSize: new go.Size(Infinity, Infinity)
+            //  });
         },jsonString, view);
 
         //const { buffer } = parseDataUrl(imageData);
